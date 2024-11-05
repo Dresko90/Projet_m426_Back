@@ -1,8 +1,12 @@
-package ch.epai.ict.m295.message_api;
+package ch.epai.ict.m295.message_api.api;
 
 import java.util.List;
 
 import org.springframework.web.bind.annotation.RestController;
+
+import ch.epai.ict.m295.message_api.domain.User;
+import ch.epai.ict.m295.message_api.domain.UserDirectory;
+
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

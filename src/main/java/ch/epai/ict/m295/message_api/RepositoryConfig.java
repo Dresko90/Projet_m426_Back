@@ -3,6 +3,9 @@ package ch.epai.ict.m295.message_api;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import ch.epai.ict.m295.message_api.data.InMemoryUserDirectory;
+import ch.epai.ict.m295.message_api.domain.UserDirectory;
+
 @Configuration
 public class RepositoryConfig {
     

@@ -1,7 +1,10 @@
-package ch.epai.ict.m295.message_api;
+package ch.epai.ict.m295.message_api.data;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import ch.epai.ict.m295.message_api.domain.User;
+import ch.epai.ict.m295.message_api.domain.UserDirectory;
 
 public class InMemoryUserDirectory implements UserDirectory {
     private List<User> users;

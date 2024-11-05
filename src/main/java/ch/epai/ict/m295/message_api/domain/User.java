@@ -1,4 +1,4 @@
-package ch.epai.ict.m295.message_api;
+package ch.epai.ict.m295.message_api.domain;
 
 public class User {
 
