@@ -1,0 +1,18 @@
+services:
+  devcontainer:
+    build: .
+    volumes:
+      - ../..:/workspaces:cached
+    network_mode: service:db
+    command: sleep infinity
+
+  db:
+    image: mariadb
+    restart: always
+    volumes:
+      - mysql-data:/var/lib/mysql
+    environment:
+      MARIADB_ROOT_PASSWORD: epai123
+
+volumes:
+  mysql-data:
