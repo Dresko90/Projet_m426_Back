@@ -7,8 +7,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class DatabaseSettings {
 
-    @Value("${app.db.user}")
-    private String user;
+    @Value("${app.db.username}")
+    private String username;
 
     @Value("${app.db.password}")
     private String password;
@@ -16,9 +16,9 @@ public class DatabaseSettings {
     @Value("${app.db.url}")
     private String url;
 
-    @Bean("user")
-    public String getUser() {
-        return this.user;
+    @Bean("username")
+    public String getUserName() {
+        return this.username;
     }
 
     @Bean("password")

@@ -1,26 +1,34 @@
 package ch.epai.ict.m295.message_api;
 
+import javax.sql.DataSource;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
-import ch.epai.ict.m295.message_api.data.InMemoryUserDirectory;
 import ch.epai.ict.m295.message_api.domain.UserDirectory;
+import ch.epai.ict.m295.message_api.data.SqlUserRepository;
 
 @Configuration
 public class RepositoryConfig {
     
-    private String url;
-    private String user;
-    private String password;
+    String url;
+    String username;
+    String password;
 
-    public RepositoryConfig(String url, String user, String password) {
+
+    public RepositoryConfig(String url, String username, String password) {
         this.url = url;
-        this.user = user;
+        this.username = username;
         this.password = password;
     }
 
     @Bean("userDirectory")
     public UserDirectory getUserDirectory() {
-        return new InMemoryUserDirectory(this.url, this.user, this.password);
+        DataSource dataSource = new DriverManagerDataSource(
+                this.url,
+                this.username,
+                this.password);
+        return new SqlUserRepository(dataSource);
     }
 }

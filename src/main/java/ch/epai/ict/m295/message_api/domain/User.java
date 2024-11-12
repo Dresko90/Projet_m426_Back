@@ -1,7 +1,6 @@
 package ch.epai.ict.m295.message_api.domain;
 
 public class User {
-
     private long id;
     private String email;
     private String displayName;

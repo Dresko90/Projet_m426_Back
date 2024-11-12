@@ -10,11 +10,6 @@ public class InMemoryUserDirectory implements UserDirectory {
     private List<User> users;
 
     public InMemoryUserDirectory(String url, String user, String password) {
-
-        System.out.println(url);
-
-        // TODO : ouvrir la connexion vers la base de données.
-
         this.users = new ArrayList<User>();
         this.users.add(new User(1, "user1@example.com", "user1"));
         this.users.add(new User(2, "user2@example.com", "user2"));
