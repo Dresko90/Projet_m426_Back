@@ -33,7 +33,7 @@ public class InMemoryUserDirectory implements UserDirectory {
     }
 
     @Override
-    public void createUser(User user) {
+    public void createUser(User user, String password) {
         if (userExists(user.getId())) {
             throw new IllegalArgumentException("User already exists");
         }

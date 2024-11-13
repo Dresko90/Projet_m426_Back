@@ -5,6 +5,7 @@ import java.util.List;
 import javax.sql.DataSource;
 
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import ch.epai.ict.m295.message_api.domain.User;
@@ -31,9 +32,15 @@ public class SqlUserRepository implements UserDirectory {
     }
 
     @Override
-    public void createUser(User user) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'createUser'");
+    public void createUser(User user, String password) {
+        MapSqlParameterSource parameters = new MapSqlParameterSource()
+            .addValue("id", user.getId())
+            .addValue("email", user.getEmail())
+            .addValue("display_name", user.getDisplayName())
+            .addValue("user_password", password);
+        jdbcTemplate.update(
+            "INSERT INTO user (user_id, email, display_name, user_password) VALUE (:id, :email, :display_name, :user_password)",
+            parameters);
     }
 
     @Override

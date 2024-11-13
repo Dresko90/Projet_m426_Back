@@ -32,13 +32,19 @@ public class UserController {
     @PostMapping(path = "/api/v1/users", 
             consumes = "application/json", produces = "application/json")
     @ResponseStatus(HttpStatus.CREATED)
-    public User handlePostUsers(@RequestBody User newUser) {
+    public UserDto handlePostUsers(@RequestBody CreateUserDto createUserDto) {
         User user = UserBuilder.create()
-            .setEmail(newUser.getEmail())
-            .setDisplayName(newUser.getDisplayName())
+            .setEmail(createUserDto.email)
+            .setDisplayName(createUserDto.displayName)
             .build();
-        this.userDir.createUser(user);
-        return user;
+        this.userDir.createUser(user, createUserDto.password);
+
+        UserDto res = new UserDto();
+        res.id = user.getId();
+        res.email = user.getEmail();
+        res.displayName = user.getDisplayName();
+
+        return res;
     }
 
     @GetMapping(path = "/api/v1/users/{id}", produces = "application/json")

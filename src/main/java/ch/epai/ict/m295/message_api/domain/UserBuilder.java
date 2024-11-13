@@ -1,7 +1,7 @@
 package ch.epai.ict.m295.message_api.domain;
 
 public class UserBuilder {
-    private long id;
+    private Long id;
     private String email;
     private String displayName; 
 
@@ -25,6 +25,9 @@ public class UserBuilder {
     }
 
     public User build() {
+        if (id == null) {
+            id = IdGeneratorManager.get(User.class).getNextId();
+        }
         return new User(id, email, displayName);
     }
 
