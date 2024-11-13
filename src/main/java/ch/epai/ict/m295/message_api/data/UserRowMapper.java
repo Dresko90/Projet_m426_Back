@@ -9,6 +9,7 @@ import org.springframework.lang.Nullable;
 
 import ch.epai.ict.m295.message_api.domain.User;
 import ch.epai.ict.m295.message_api.domain.UserBuilder;
+import ch.epai.ict.m295.message_api.domain.UserRoles;
 
 public class UserRowMapper implements RowMapper<User> {
 
@@ -19,6 +20,7 @@ public class UserRowMapper implements RowMapper<User> {
             .setId(rs.getLong("user_id"))
             .setEmail(rs.getString("email"))
             .setDisplayName(rs.getString("display_name"))
+            .setRole(UserRoles.valueOf(rs.getString("user_role")))
             .build();
     }
 }

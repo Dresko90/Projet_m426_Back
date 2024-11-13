@@ -7,4 +7,6 @@ public interface UserDirectory {
     public User getUser(long id);
     public void createUser(User user, String password);
     public void deleteUser(long id);
+    public boolean validate(String email, String password);
+    public User getUserByEmail(String email);
 }

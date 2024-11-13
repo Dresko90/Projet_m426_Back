@@ -7,6 +7,7 @@ CREATE TABLE user (
     user_id       BIGINT UNSIGNED NOT NULL,
     email         VARCHAR(50),
     display_name  VARCHAR(50),
+    user_role     VARCHAR(50),
     user_password VARCHAR(255),
 PRIMARY KEY (user_id)
 );

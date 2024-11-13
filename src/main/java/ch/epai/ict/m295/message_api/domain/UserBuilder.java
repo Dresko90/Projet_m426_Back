@@ -4,9 +4,14 @@ public class UserBuilder {
     private Long id;
     private String email;
     private String displayName; 
+    private UserRoles role;
 
     public static UserBuilder create() {
         return new UserBuilder();
+    }
+
+    public UserBuilder() {
+        this.role = UserRoles.USER;
     }
 
     public UserBuilder setId(long id) {
@@ -24,11 +29,15 @@ public class UserBuilder {
         return this;
     }
 
+    public UserBuilder setRole(UserRoles role) {
+        this.role = role;
+        return this;
+    }
+
     public User build() {
         if (id == null) {
             id = IdGeneratorManager.get(User.class).getNextId();
         }
-        return new User(id, email, displayName);
+        return new User(id, email, displayName, role);
     }
-
 }
