@@ -47,23 +47,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         @NonNull FilterChain filterChain)
             throws ServletException, IOException {
         
+        User principal = null;
         String role = null;
-        String username = null;
    
         String authorization = request.getHeader("Authorization");
         if (authorization != null && authorization.startsWith("Bearer ")) {
             Claims claims = extractClaims(authorization.substring(7));
-
-            User user = this.userDirectory.getUser(Long.parseLong(claims.getSubject()));
-            username = user.getEmail();
+            long userId = Long.parseLong(claims.getSubject());
             role = extractRole(claims);
+
+            principal = this.userDirectory.getUser(userId);
+            request.setAttribute("principal", principal);
         }
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (principal != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             List<SimpleGrantedAuthority> authorities = new ArrayList<>();
             authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
             UsernamePasswordAuthenticationToken authentication = 
-                new UsernamePasswordAuthenticationToken(username, null, authorities);
+                new UsernamePasswordAuthenticationToken(principal, null, authorities);
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
@@ -72,9 +73,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private Claims extractClaims(String token) {
-
         SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
-
         return Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()

@@ -12,6 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 import ch.epai.ict.m295.message_api.domain.User;
 import ch.epai.ict.m295.message_api.domain.UserBuilder;
 import ch.epai.ict.m295.message_api.domain.UserDirectory;
+import ch.epai.ict.m295.message_api.domain.UserRoles;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
@@ -41,7 +43,6 @@ public class UserController {
     public UserController(UserDirectory userDirectory) {
         this.userDir = userDirectory;
     }
-
 
     @Operation(summary = "Demande d'authentification")
     @SecurityRequirement(name = "bearerAuth")
@@ -113,8 +114,11 @@ public class UserController {
     })
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping(path = "/users/{id}", produces = "application/json")
-    public UserDto handleGetUser(@PathVariable long id) {
-        return createUserDtoFromUser(this.userDir.getUser(id));
+    public UserDto handleGetUser(@PathVariable long id, @RequestAttribute User principal) {
+        if (principal.getId() == id || principal.getRole() == UserRoles.ADMIN ) {
+            return createUserDtoFromUser(this.userDir.getUser(id));
+        }
+        throw new ResponseStatusException(HttpStatusCode.valueOf(403));
     }
 
     @Operation(summary = "Supprime un utilisateur")
