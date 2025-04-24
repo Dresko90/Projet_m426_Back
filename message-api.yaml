@@ -1,0 +1,531 @@
+openapi: 3.0.1
+info:
+  title: Instant Messaging API
+  description: API REST pour une messagerie instantanée avec gestion des utilisateurs, des messages et des conversations.
+  version: 1.0.0
+  contact:
+    name: Jérôme Frossard
+    email: jerome.frossard@epai.ch
+
+servers:
+  - url: https://message-api.n01.lab.epai-ict.ch
+    description: API de production
+  - url: http://localhost:8080
+    description: API locale de développement
+
+security:
+  - BearerAuth: []
+
+paths:
+  /tokens:
+    post:
+      summary: Crée un token d'accès pour l'utilisateur (authentification)
+      operationId: createToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+            example:
+              email: "trillian@infinidim.ch"
+              password: "h2g2-42"
+      responses:
+        '201':
+          description: Token créé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          description: Requête incorrecte
+        '401':
+          description: Identifiants incorrects
+
+  /tokens/{token}:
+    delete:
+      summary: Supprime un token d'accès (déconnexion)
+      operationId: deleteToken
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Token supprimé avec succès
+        '404':
+          description: Token non trouvé
+
+  /users:
+    post:
+      summary: Crée un nouvel utilisateur
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+            example:
+              username: "trillian"
+              email: "trillian@infinidim.ch"
+              password: "h2g2-42"
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Utilisateur créé
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+              example:
+                id: "123e4567-e89b-12d3-a456-426614174000"
+                username: "trillian"
+                email: "trillian@infinidim.ch"
+                _links:
+                  self:
+                    href: "/users/123e4567-e89b-12d3-a456-426614174000"
+                    allow: ["GET", "PUT", "DELETE"]
+                  messages:
+                    href: "/users/123e4567-e89b-12d3-a456-426614174000/messages"
+                    allow: ["GET"]
+        '400':
+          description: Requête incorrecte
+        '500':
+          description: Erreur interne du serveur
+
+  /users/{userId}:
+    get:
+      summary: Récupère un utilisateur par ID
+      operationId: getUser
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID de l'utilisateur
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Utilisateur trouvé
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+              example:
+                id: "123e4567-e89b-12d3-a456-426614174000"
+                username: "trillian"
+                email: "trillian@infinidim.ch"
+                _links:
+                  self:
+                    href: "/users/123e4567-e89b-12d3-a456-426614174000"
+                    allow: ["GET", "PUT", "DELETE"]
+                  messages:
+                    href: "/users/123e4567-e89b-12d3-a456-426614174000/messages"
+                    allow: ["GET"]
+        '404':
+          description: Utilisateur non trouvé
+    put:
+      summary: Met à jour les informations d'un utilisateur
+      operationId: updateUser
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID de l'utilisateur
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+            example:
+              email: "trillian@infinidim.ch"
+              password: "new-h2g2-42"
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Utilisateur mis à jour
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+              example:
+                id: "123e4567-e89b-12d3-a456-426614174000"
+                username: "trillian"
+                email: "trillian@infinidim.ch"
+                _links:
+                  self:
+                    href: "/users/123e4567-e89b-12d3-a456-426614174000"
+                    allow: ["GET", "PUT", "DELETE"]
+                  messages:
+                    href: "/users/123e4567-e89b-12d3-a456-426614174000/messages"
+                    allow: ["GET"]
+        '400':
+          description: Requête incorrecte
+        '404':
+          description: Utilisateur non trouvé
+    delete:
+      summary: Supprime un utilisateur
+      operationId: deleteUser
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID de l'utilisateur
+          schema:
+            type: string
+
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Utilisateur supprimé
+        '404':
+          description: Utilisateur non trouvé
+
+  /conversations:
+    post:
+      summary: Crée une nouvelle conversation
+      operationId: createConversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationCreate'
+            example:
+              participants:
+                - "123e4567-e89b-12d3-a456-426614174000"
+                - "234e4567-e89b-12d3-a456-426614174001"
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Conversation créée
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+              example:
+                id: "876e4567-e89b-12d3-a456-426614174000"
+                participants:
+                  - id: "123e4567-e89b-12d3-a456-426614174000"
+                    _links:
+                      self:
+                        href: "/users/123e4567-e89b-12d3-a456-426614174000"
+                  - id: "234e4567-e89b-12d3-a456-426614174001"
+                    _links:
+                      self:
+                        href: "/users/234e4567-e89b-12d3-a456-426614174001"
+                _links:
+                  self:
+                    href: "/conversations/876e4567-e89b-12d3-a456-426614174000"
+                    allow: ["GET", "POST"]
+                  messages:
+                    href: "/conversations/876e4567-e89b-12d3-a456-426614174000/messages"
+                    allow: ["GET", "POST"]
+        '400':
+          description: Requête incorrecte
+        '500':
+          description: Erreur interne du serveur
+
+  /conversations/{conversationId}/messages:
+    get:
+      summary: Récupérer tous les messages d'une conversation
+      operationId: getMessages
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          description: ID de la conversation
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Liste des messages
+          content:
+            application/hal+json:
+              schema:
+                type: object
+                properties:
+                  _embedded:
+                    type: object
+                    properties:
+                      messages:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/MessageResponse'
+              example:
+                _embedded:
+                  messages:
+                    - id: "876e4567-e89b-12d3-a456-426614174001"
+                      content: "Let's go somewhere!"
+                      timestamp: "2024-10-09T14:55:27.000Z"
+                      _links:
+                        self:
+                          href: "/conversations/876e4567-e89b-12d3-a456-426614174000/messages/876e4567-e89b-12d3-a456-426614174001"
+                          allow: ["GET"]
+                        conversation:
+                          href: "/conversations/876e4567-e89b-12d3-a456-426614174000"
+                          allow: ["GET"]
+                _links:
+                  self:
+                    href: "/conversations/876e4567-e89b-12d3-a456-426614174000/messages"
+                    allow: ["GET", "POST"]
+        '404':
+          description: Conversation non trouvée
+    post:
+      summary: Envoie un message dans une conversation
+      operationId: sendMessage
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          description: ID de la conversation
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageCreate'
+            example:
+              senderId: "123e4567-e89b-12d3-a456-426614174000"
+              content: "Let's go somewhere!"
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          description: Message créé
+          content:
+            application/hal+json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              example:
+                id: "876e4567-e89b-12d3-a456-426614174001"
+                content: "Let's go somewhere!"
+                timestamp: "2024-10-09T14:55:27.000Z"
+                _links:
+                  self:
+                    href: "/conversations/876e4567-e89b-12d3-a456-426614174000/messages/876ee4567-e89b-12d3-a456-426614174001"
+                    allow: ["GET"]
+                  sender:
+                    href: "/users/123e4567-e89b-12d3-a456-426614174000"
+                    allow: ["GET"]
+                  conversation:
+                    href: "/conversations/876e4567-e89b-12d3-a456-426614174000"
+                    allow: ["GET"]
+        '400':
+          description: Requête incorrecte
+        '404':
+          description: Conversation non trouvée
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UserCreate:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    UserUpdate:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        _links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+                allow:
+                  type: array
+                  items:
+                    type: string
+                    example: GET
+            messages:
+              type: object
+              properties:
+                href:
+                  type: string
+                allow:
+                  type: array
+                  items:
+                    type: string
+                    example: GET
+
+    ConversationCreate:
+      type: object
+      required:
+        - participants
+      properties:
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+            description: ID de l'utilisateur participant à la conversation
+
+    ConversationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        participants:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              _links:
+                type: object
+                properties:
+                  self:
+                    type: object
+                    properties:
+                      href:
+                        type: string
+        _links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+                allow:
+                  type: array
+                  items:
+                    type: string
+                    example: GET
+            messages:
+              type: object
+              properties:
+                href:
+                  type: string
+                allow:
+                  type: array
+                  items:
+                    type: string
+                    example: GET
+
+    MessageCreate:
+      type: object
+      required:
+        - senderId
+        - content
+      properties:
+        senderId:
+          type: string
+          format: uuid
+        content:
+          type: string
+
+    MessageResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        _links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+                allow:
+                  type: array
+                  items:
+                    type: string
+                    example: GET
+            sender:
+              type: object
+              properties:
+                href:
+                  type: string
+                allow:
+                  type: array
+                  items:
+                    type: string
+                    example: GET
+            conversation:
+              type: object
+              properties:
+                href:
+                  type: string
+                allow:
+                  type: array
+                  items:
+                    type: string
+                    example: GET
