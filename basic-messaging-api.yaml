@@ -7,17 +7,17 @@ info:
   contact:
     name: "Jérôme Frossard"
     email: jerome.frossard@epai.ch
+
 servers:
   - url: https://message-api.n01.lab.epai-ict.ch
     description: "Production"
   - url: http://localhost:8080
     description: "Développement"
-security:
-  - BearerAuth: []
+
 paths:
   /tokens:
     post:
-      summary: "Créer un token (connexion)"
+      summary: "Créer un token (connexion)."
       requestBody:
         required: true
         content:
@@ -32,20 +32,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenResponse'
         "401":
-          description: "Identifiants de connexion non valides."
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
 
-  /tokens/current:
+  /tokens/me:
     delete:
-      summary: "Supprimer le token de l'utilisateur connecté (déconnexion)"
+      summary: "Supprimer le token de l'utilisateur·rice connecté·e (déconnexion). Si le token est invalide ou expiré, la requête ne produit pas d'effet."
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       responses:
         "204":
           description: "Token supprimé"
+        "500":
+          description: "Erreur interne du serveur"
 
   /users:
     post:
-      summary: "Créer un utilisateur"
+      summary: "Créer un compte d'utilisateur·rice."
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -54,55 +62,78 @@ paths:
               $ref: '#/components/schemas/UserCreate'
             examples:
               exemple1:
-                summary: "Utilisation avec un email"
+                summary: "Création du compte avec un email"
                 value:
                   username: "trillian@infinidim.ch"
                   password: "h2G2-42"
               exemple2:
-                summary: "Utilisateur avec un numéro de téléphone"
+                summary: "Création du compte avec un numéro de téléphone"
                 value:
                   username: "+41799991234"
                   password: "h2G2-42"
       responses:
         "201":
-          description: "Utilisateur créé"
+          description: "Le compte a été créé avec succès."
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
 
   /users/{userId}:
     get:
-      summary: "Obtenir les informations d’un utilisateur"
+      summary: "Obtenir les informations d’un·e utilisateur·rice."
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       parameters:
         - name: userId
           in: path
           required: true
           schema:
-            type: number
-            format: long
+            type: integer
+            format: int64
           example: 1001
       responses:
         "200":
-          description: "Détails de l'utilisateur"
+          description: "Les détails de l'utilisateur·rice."
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
-                
-    post:
-      summary: "Modifier les informations d’un utilisateur"
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          description: "Utilisateur·rice non trouvé·e"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: "Utilisateur non trouvé"
+        "500":
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      summary: "Modifier les informations d’un·e utilisateur·rice."
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       parameters:
         - name: userId
           in: path
           required: true
           schema:
-            type: number
-            format: long
+            type: integer
+            format: int64
           example: 1001
       requestBody:
         required: true
@@ -112,38 +143,70 @@ paths:
               $ref: '#/components/schemas/UserUpdate'
             examples:
               changePassword:
-                summary: "Changer le mot de passe"
+                summary: "Modification du mot de passe"
                 value:
                   password: "h2G2-42"
               changeUsername:
-                summary: "Changer le nom d'utilisateur"
+                summary: "Modification du nom d'utilisateur"
                 value:
                   username: "tricia@infinidim.com"
       responses:
         "200":
-          description: "Les informations de l'utilisateur ont été mises à jour avec succès"
+          description: "Les informations de l'utilisateur·rice ont été modifiées avec succès."
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          description: "Utilisateur·rice non trouvé·e"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: "Utilisateur non trouvé"
+        "500":
+          $ref: '#/components/responses/InternalServerError'
 
   /conversations:
     get:
-      summary: "Récupérer les conversations dans lesquelles l'utilisateur connecté est actif."
+      summary: "Récupérer les conversations dans lesquelles l'utilisateur·rice connecté est actif."
       security:
-        - bearerAuth: []
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
       responses:
         "200":
-          description: "Liste paginée des conversations"
+          description: "Une liste paginée des conversations."
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/ConversationsResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
 
     post:
       summary: "Créer une nouvelle conversation."
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -152,11 +215,11 @@ paths:
               $ref: '#/components/schemas/ConversationCreate'
             examples:
               singleParticipant:
-                summary: "Un seul participant"
+                summary: "Avec un·e seul·e participant·e"
                 value:
                   userId: 1002
               multipleParticipants:
-                summary: "Plusieurs participants"
+                summary: "Avec plusieurs participant·e·s"
                 value:
                   - userId: 1002
                     role: owner
@@ -169,20 +232,27 @@ paths:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/ConversationsResponse'
-
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "500":
+          $ref: '#/components/responses/InternalServerError'
 
   /conversations/{conversationId}:
     get:
       summary: "Récupérer les détails d'une conversation."
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       parameters:
         - name: conversationId
           in: path
           required: true
           schema:
-            type: number
-            format: long
+            type: integer
+            format: int64
           example: 4005
       responses:
         "200":
@@ -191,150 +261,244 @@ paths:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/ConversationResponse'
-
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          description: "Conversation non trouvée"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: "Conversation non trouvée"
+        "500":
+          $ref: '#/components/responses/InternalServerError'
 
   /conversations/{conversationId}/participants:
     get:
-      summary: "Récupèrer la liste des participants d'une conversation"
+      summary: "Récupèrer la liste des participant·e·s d'une conversation."
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       parameters:
         - name: conversationId
           in: path
           required: true
           schema:
-            type: number
-            format: long
+            type: integer
+            format: int64
           example: 4005
       responses:
         "200":
-          description: "Une liste des participants de la conversation"
+          description: "La liste des participant·e·s de la conversation."
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/ParticipantsResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          description: "Conversation non trouvée"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: "Conversation non trouvée"
+        "500":
+          $ref: '#/components/responses/InternalServerError'
 
   /conversations/{conversationId}/participants/{participantId}:
     get:
-      summary: "Récupèrer les détails d'un participant."
+      summary: "Récupèrer les détails d'un·e participant·e."
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       parameters:
         - name: conversationId
           in: path
           required: true
           schema:
-            type: number
-            format: long
+            type: integer
+            format: int64
           example: 4005
         - name: participantId
           in: path
           required: true
           schema:
-            type: number
-            format: long
+            type: integer
+            format: int64
           example: 1001
       responses:
         "200":
-          description: "Les détails du participant."
+          description: "Les détails de lea participant·e."
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/ParticipantResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          description: "Participant·e non trouvé·e"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: "Participant·e non trouvé·e"
+        "500":
+          $ref: '#/components/responses/InternalServerError'
 
-    post:
-      summary: "Modifier le rôle ou le statut d'un participant."
+    patch:
+      summary: "Modifier le rôle ou le statut d'un·e participant·e."
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       parameters:
         - name: conversationId
           in: path
           required: true
           schema:
-            type: number
-            format: long
+            type: integer
+            format: int64
           example: 4005
         - name: participantId
           in: path
           required: true
           schema:
-            type: number
-            format: long
+            type: integer
+            format: int64
           example: 1001
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                role:
-                  $ref: '#/components/schemas/ParticipantRoleType'
-                status:
-                  $ref: '#/components/schemas/ParticipantStatusType'
+              $ref: '#/components/schemas/ParticipantCreate'
       responses:
         "200":
-          description: "Participant mis à jour"
+          description: "Le rôle ou le statut de lea participant·e a été modifié avec succès."
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/ParticipantResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":  
+          description: "Participant·e non trouvé·e"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: "Participant·e non trouvé·e"
+        "500":
+          $ref: '#/components/responses/InternalServerError'
 
     delete:
-      summary: "Supprimer ou désactiver un participant."
+      summary: "Désactiver un·e participant·e (suppression logique)."
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       parameters:
         - name: conversationId
           in: path
           required: true
           schema:
-            type: number
-            format: long
+            type: integer
+            format: int64
           example: 4005
         - name: participantId
           in: path
           required: true
           schema:
-            type: number
-            format: long
+            type: integer
+            format: int64
           example: 1001
       responses:
         "204":
-          description: "Participant supprimé ou désactivé"
+          description: "Lea participant·e a été désactivé·e avec succès (suppression logique)."
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          description: "Participant·e non trouvé·e"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: "Participant·e non trouvé·e"
+        "500":
+          $ref: '#/components/responses/InternalServerError'
 
   /conversations/{conversationId}/messages:
     get:
       summary: "Récupérer les messages d'une conversation."
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       parameters:
         - name: conversationId
           in: path
           required: true
           schema:
-            type: number
-            format: long
+            type: integer
+            format: int64
           example: 4005
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
       responses:
         "200":
-          description: "Une liste paginée des messages de la conversation."
+          description: "La liste paginée des messages de la conversation."
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/MessagesResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          description: "Conversation non trouvée"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: "Conversation non trouvée"
+        "500":
+          $ref: '#/components/responses/InternalServerError'
 
     post:
       summary: "Ajouter un message à la conversation."
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       parameters:
         - name: conversationId
           in: path
           required: true
           schema:
-            type: number
-            format: long
+            type: integer
+            format: int64
           example: 4005
       requestBody:
         required: true
@@ -349,26 +513,43 @@ paths:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/MessageResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          description: "Conversation non trouvée"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: "Conversation non trouvée"
+        "500":
+          $ref: '#/components/responses/InternalServerError'
 
   /conversations/{conversationId}/messages/{messageId}:
-    post:
-      summary: "Modifier le statut du message pour le participant spécifié (par défaut l'utilisateur connecté)."
+    patch:
+      summary: "Modifier le statut du message pour le participant spécifié (par défaut l'utilisateur·rice connecté)."
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       parameters:
         - name: conversationId
           in: path
           required: true
           schema:
-            type: number
-            format: long
+            type: integer
+            format: int64
           example: 4005
         - name: messageId
           in: path
           required: true
           schema:
-            type: number
-            format: long
+            type: integer
+            format: int64
           example: 6001
       requestBody:
         required: false
@@ -398,48 +579,95 @@ paths:
                 _links:
                   self:
                     href: /conversations/4005/message/6001
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          description: "Conversation ou message non trouvée"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: "Conversation ou message non trouvée"
+        "500":
+          $ref: '#/components/responses/InternalServerError'
 
     delete:
-      summary: "Marquer un message comme étant supprimé."
+      summary: "Marquer un message comme étant supprimé (suppression logique)."
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       parameters:
         - name: conversationId
           in: path
           required: true
           schema:
-            type: number
-            format: long
+            type: integer
+            format: int64
         - name: messageId
           in: path
           required: true
           schema:
-            type: number
-            format: long
+            type: integer
+            format: int64
       responses:
         "204":
           description: "Le message a été marqué comme supprimé (suppression logique)."
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          description: "Conversation ou message non trouvé"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: "Conversation ou message non trouvé"
+        "500":
+          $ref: '#/components/responses/InternalServerError'
 
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+
   schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+
     # Basic types
     # These are used to define the basic types used in the API
+
     EmailType:
       type: string
       format: email
 
     PhoneNumberType:
+      description: "Numéro de téléphone au format E.164."
       type: string
       pattern: ^\+?[1-9]\d{1,14}$
 
     UserNameType:
-      description: "Identifiant de connexion, soit un email, soit un numéro de téléphone au format E.164."
       oneOf:
         - $ref: '#/components/schemas/EmailType'
         - $ref: '#/components/schemas/PhoneNumberType'
 
     # Hal types
     # These are used to represent the HAL links in the API responses
+
     HalLinks:
       type: object
       properties:
@@ -497,6 +725,7 @@ components:
 
     # User types
     # These are used to represent the users in the API
+
     UserCreate:
       type: object
       required:
@@ -518,8 +747,8 @@ components:
       type: object
       properties:
         userId:
-          type: number
-          format: long
+          type: integer
+          format: int64
         username:
           $ref: '#/components/schemas/UserNameType'
         _links:
@@ -574,8 +803,8 @@ components:
         - userId
       properties:
         userId:
-          type: number
-          format: long
+          type: integer
+          format: int64
         role:
           $ref: '#/components/schemas/ParticipantRoleType'
         status:
@@ -606,12 +835,23 @@ components:
         - $ref: '#/components/schemas/ParticipantCreateFromUserId'
         - $ref: '#/components/schemas/ParticipantCreateFromUsername'
 
+    ParticipantUpdate:
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/ParticipantRoleType'
+        status:
+          $ref: '#/components/schemas/ParticipantStatusType'
+      example:
+        role: member
+        status: active
+
     ParticipantResponse:
       type: object
       properties:
         userId:
-          type: number
-          format: long
+          type: integer
+          format: int64
         username:
           $ref: '#/components/schemas/UserNameType'
         role:
@@ -665,6 +905,7 @@ components:
 
     # Conversation types
     # These are used to represent the conversations in the API
+
     ConversationCreateSingle:
       type: object
       oneOf:
@@ -673,8 +914,8 @@ components:
             - userId
           properties:
             userId:
-              type: number
-              format: long
+              type: integer
+              format: int64
           example:
             userId: 1002
         - type: object
@@ -711,8 +952,8 @@ components:
         - type: object
           properties:
             id:
-              type: number
-              format: long
+              type: integer
+              format: int64
             _links:
               allOf:
                 - $ref: '#/components/schemas/HalLinks'
@@ -762,8 +1003,8 @@ components:
                 type: object
                 properties:
                   id:
-                    type: number
-                    format: long
+                    type: integer
+                    format: int64
                   _embedded:
                     type: object
                     properties:
@@ -823,7 +1064,6 @@ components:
           last:
             href: /conversations?page=10
 
-
     # Message types
     # These are used to represent the messages in the API
 
@@ -841,10 +1081,11 @@ components:
       type: object
       properties:
         id:
-          type: number
-          format: long
+          type: integer
+          format: int64
         senderId:
-          type: string
+          type: integer
+          format: int64
         body:
           type: string
         sentAt:
@@ -856,8 +1097,8 @@ components:
             type: object
             properties:
               userId:
-                type: number
-                format: long
+                type: integer
+                format: int64
               readAt:
                 type: string
                 format: date-time
@@ -918,14 +1159,14 @@ components:
           size: 20
           totalElements: 1
           totalPages: 1
-          number: 0          
+          number: 0
 
     MessageStatusUpdate:
       type: object
       properties:
         userId:
-          type: number
-          format: long
+          type: integer
+          format: int64
         readAt:
           type: string
           format: date-time
@@ -960,3 +1201,44 @@ components:
               - userId: 1003
                 readAt: null
                 deleted: false
+
+  responses:
+    BadRequest:
+      description: "Requête invalide"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 400
+            message: "Requête invalide"
+
+    Unauthorized:
+      description: "Non autorisé"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 401
+            message: "Identifiants de connexion non valides."
+    
+    Forbidden:
+      description: "Accès refusé"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 403
+            message: "Accès refusé"
+
+    InternalServerError:
+      description: "Erreur interne du serveur"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 500
+            message: "Erreur interne du serveur"
