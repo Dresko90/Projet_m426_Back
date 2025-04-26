@@ -1,7 +1,19 @@
-openapi: 3.0.3
+openapi: 3.0.1
 info:
-  title: "Messagerie Instantanée API"
+  title: Instant Messaging API
+  description:
+    "API REST pour une messagerie instantanée avec gestion des utilisateurs, des conversations et des messages."
   version: 1.0.0
+  contact:
+    name: "Jérôme Frossard"
+    email: jerome.frossard@epai.ch
+servers:
+  - url: https://message-api.n01.lab.epai-ict.ch
+    description: "Production"
+  - url: http://localhost:8080
+    description: "Développement"
+security:
+  - BearerAuth: []
 paths:
   /tokens:
     post:
@@ -24,7 +36,7 @@ paths:
 
   /tokens/current:
     delete:
-      summary: "Supprimer de l'utilsiateur connecté (déconnexion)"
+      summary: "Supprimer le token de l'utilisateur connecté (déconnexion)"
       security:
         - bearerAuth: []
       responses:
@@ -69,7 +81,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            type: number
+            format: long
           example: 1001
       responses:
         "200":
@@ -78,6 +91,7 @@ paths:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
+                
     post:
       summary: "Modifier les informations d’un utilisateur"
       security:
@@ -87,7 +101,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            type: number
+            format: long
           example: 1001
       requestBody:
         required: true
@@ -124,6 +139,7 @@ paths:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/ConversationsResponse'
+
     post:
       summary: "Créer une nouvelle conversation."
       security:
@@ -152,31 +168,8 @@ paths:
           content:
             application/hal+json:
               schema:
-                example:
-                  id: "4005"
-                  _embedded:
-                    participants:
-                      - userId: 1001
-                        username: "trillian@infinidim.ch"
-                        role: owner
-                        status: active
-                        _links:
-                          self:
-                            href: /conversations/4005/participants/1001
-                      - userId: 1002
-                        username: "+41799991234"
-                        role: member
-                        status: active
-                        _links:
-                          self:
-                            href: /conversations/4005/participants/1002
-                  _links:
-                    self:
-                      href: /conversations/4005
-                    messages:
-                      href: /conversations/4005/messages
-                    participants:
-                      href: /conversations/4005/participants
+                $ref: '#/components/schemas/ConversationsResponse'
+
 
   /conversations/{conversationId}:
     get:
@@ -190,26 +183,15 @@ paths:
           schema:
             type: number
             format: long
+          example: 4005
       responses:
         "200":
           description: "Les détails de la conversation."
           content:
             application/hal+json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: number
-                    format: long
-                  _embedded:
-                    type: object
-                    properties:
-                      participants:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/ParticipantResponse'
-                  _links:
-                    $ref: '#/components/schemas/HalLinks'
+                $ref: '#/components/schemas/ConversationResponse'
+
 
   /conversations/{conversationId}/participants:
     get:
@@ -223,23 +205,14 @@ paths:
           schema:
             type: number
             format: long
+          example: 4005
       responses:
         "200":
           description: "Une liste des participants de la conversation"
           content:
             application/hal+json:
               schema:
-                type: object
-                properties:
-                  _embedded:
-                    type: object
-                    properties:
-                      participants:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/ParticipantResponse'
-                  _links:
-                    $ref: '#/components/schemas/HalLinks'
+                $ref: '#/components/schemas/ParticipantsResponse'
 
   /conversations/{conversationId}/participants/{participantId}:
     get:
@@ -251,12 +224,16 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            type: number
+            format: long
+          example: 4005
         - name: participantId
           in: path
           required: true
           schema:
-            type: string
+            type: number
+            format: long
+          example: 1001
       responses:
         "200":
           description: "Les détails du participant."
@@ -264,6 +241,7 @@ paths:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/ParticipantResponse'
+
     post:
       summary: "Modifier le rôle ou le statut d'un participant."
       security:
@@ -273,12 +251,16 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            type: number
+            format: long
+          example: 4005
         - name: participantId
           in: path
           required: true
           schema:
-            type: string
+            type: number
+            format: long
+          example: 1001
       requestBody:
         required: true
         content:
@@ -297,6 +279,7 @@ paths:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/ParticipantResponse'
+
     delete:
       summary: "Supprimer ou désactiver un participant."
       security:
@@ -306,12 +289,16 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            type: number
+            format: long
+          example: 4005
         - name: participantId
           in: path
           required: true
           schema:
-            type: string
+            type: number
+            format: long
+          example: 1001
       responses:
         "204":
           description: "Participant supprimé ou désactivé"
@@ -326,26 +313,17 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            type: number
+            format: long
+          example: 4005
       responses:
         "200":
           description: "Une liste paginée des messages de la conversation."
           content:
             application/hal+json:
               schema:
-                type: object
-                properties:
-                  _links:
-                    $ref: '#/components/schemas/HalLinks'
-                  _embedded:
-                    type: object
-                    properties:
-                      messages:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/MessageResponse'
-                  page:
-                    $ref: '#/components/schemas/PageMetadata'
+                $ref: '#/components/schemas/MessagesResponse'
+
     post:
       summary: "Ajouter un message à la conversation."
       security:
@@ -355,18 +333,15 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            type: number
+            format: long
+          example: 4005
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                messageBody:
-                  type: string
-              required:
-                - messageBody
+              $ref: '#/components/schemas/MessageCreate'
       responses:
         "201":
           description: "Le message a été envoyé avec succès."
@@ -385,12 +360,16 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            type: number
+            format: long
+          example: 4005
         - name: messageId
           in: path
           required: true
           schema:
-            type: string
+            type: number
+            format: long
+          example: 6001
       requestBody:
         required: false
         content:
@@ -404,6 +383,21 @@ paths:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/MessageResponse'
+              example:
+                id: 6001
+                senderId: 1001
+                body: "J'aurai un peu de retard. Commencez sans moi"
+                sentAt: "2025-04-24T15:00:00Z"
+                participantStatus:
+                  - userId: 1002
+                    readAt: "2025-04-24T15:03:00Z"
+                    deleted: false
+                  - userId: 1003
+                    readAt: null
+                    deleted: false
+                _links:
+                  self:
+                    href: /conversations/4005/message/6001
 
     delete:
       summary: "Marquer un message comme étant supprimé."
@@ -414,17 +408,17 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            type: number
+            format: long
         - name: messageId
           in: path
           required: true
           schema:
-            type: string
+            type: number
+            format: long
       responses:
         "204":
           description: "Le message a été marqué comme supprimé (suppression logique)."
-
-
 
 components:
   schemas:
@@ -499,7 +493,7 @@ components:
         size: 20
         totalElements: 1
         totalPages: 1
-        number: 1
+        number: 0
 
     # User types
     # These are used to represent the users in the API
@@ -636,12 +630,43 @@ components:
           self:
             href: /conversations/4005/participants/1001
 
+    ParticipantsResponse:
+      type: object
+      properties:
+        _embedded:
+          type: object
+          properties:
+            participants:
+              type: array
+              items:
+                $ref: '#/components/schemas/ParticipantResponse'
+        _links:
+          $ref: '#/components/schemas/HalLinks'
+      example:
+        _embedded:
+          participants:
+            - userId: 1001
+              username: "trillian@infinidim.ch"
+              role: owner
+              status: active
+              _links:
+                self:
+                  href: /conversations/4005/participants/1001
+            - userId: 1002
+              username: "+41799991234"
+              role: member
+              status: active
+              _links:
+                self:
+                  href: /conversations/4005/participants/1002
+        _links:
+          self:
+            href: /conversations/4005/participants
+
     # Conversation types
     # These are used to represent the conversations in the API
     ConversationCreateSingle:
       type: object
-      required:
-        - userId
       oneOf:
         - type: object
           required:
@@ -664,23 +689,66 @@ components:
     ConversationCreateMultiple:
       type: object
       properties:
-        userId:
-          type: string
         participants:
           type: array
           items:
             $ref: '#/components/schemas/ParticipantCreate'
           minItems: 1
       example:
-        - userId: 1002
-          role: owner
-          status: active
-        - userId: 1003
+        participants:
+          - userId: 1002
+            role: owner
+            status: active
+          - userId: 1003
 
     ConversationCreate:
       oneOf:
         - $ref: '#/components/schemas/ConversationCreateSingle'
         - $ref: '#/components/schemas/ConversationCreateMultiple'
+
+    ConversationResponse:
+      allOf:
+        - type: object
+          properties:
+            id:
+              type: number
+              format: long
+            _links:
+              allOf:
+                - $ref: '#/components/schemas/HalLinks'
+                - type: object
+                  properties:
+                    messages:
+                      type: object
+                      properties:
+                        href:
+                          type: string
+        - $ref: '#/components/schemas/ParticipantsResponse'
+      example:
+        id: 4005
+        _embedded:
+          participants:
+            - userId: 1001
+              username: "trillian@infinidim.ch"
+              role: owner
+              status: active
+              _links:
+                self:
+                  href: /conversations/4005/participants/1001
+            - userId: 1002
+              username: "+41799991234"
+              role: member
+              status: active
+              _links:
+                self:
+                  href: /conversations/4005/participants/1002
+        _links:
+          self:
+            href: /conversations/4005
+          messages:
+            href: /conversations/4005/messages
+          participants:
+            href: /conversations/4005/participants
 
     ConversationsResponse:
       type: object
@@ -755,28 +823,6 @@ components:
           last:
             href: /conversations?page=10
 
-    ConversationResponse:
-      type: object
-      properties:
-        id:
-          type: string
-        _embedded:
-          type: object
-          properties:
-            participants:
-              type: array
-              items:
-                $ref: '#/components/schemas/ParticipantResponse'
-        _links:
-          $ref: '#/components/schemas/HalLinks'
-      example:
-        userId: 1001
-        username: "trillian@infinidim.ch"
-        role: owner
-        status: active
-        _links:
-          self:
-            href: /conversations/4005/participants/1001
 
     # Message types
     # These are used to represent the messages in the API
@@ -784,23 +830,22 @@ components:
     MessageCreate:
       type: object
       required:
-        - messageBody
+        - body
       properties:
-        messageBody:
+        body:
           type: string
       example:
-        messageId: 4051
-        messageBody: "J'aurai un peu de retard. Commencez sans moi."
+        body: "J'aurai un peu de retard. Commencez sans moi."
 
     MessageResponse:
       type: object
       properties:
-        messageId:
+        id:
           type: number
           format: long
         senderId:
           type: string
-        messageBody:
+        body:
           type: string
         sentAt:
           type: string
@@ -811,7 +856,8 @@ components:
             type: object
             properties:
               userId:
-                type: string
+                type: number
+                format: long
               readAt:
                 type: string
                 format: date-time
@@ -820,20 +866,59 @@ components:
         _links:
           $ref: '#/components/schemas/HalLinks'
       example:
-        messageId: 4051
+        id: 6001
         senderId: 1001
-        messageBody: "J'aurai un peu de retard. Commencez sans moi"
+        body: "J'aurai un peu de retard. Commencez sans moi"
         sentAt: "2025-04-24T15:00:00Z"
         participantStatus:
           - userId: 1002
-            readAt: "2025-04-24T15:01:00Z"
+            readAt: null
             deleted: false
           - userId: 1003
             readAt: null
             deleted: false
         _links:
           self:
-            href: /conversations/4005/message/4051
+            href: /conversations/4005/message/6001
+
+    MessagesResponse:
+      type: object
+      properties:
+        _links:
+          $ref: '#/components/schemas/HalLinks'
+        _embedded:
+          type: object
+          properties:
+            messages:
+              type: array
+              items:
+                $ref: '#/components/schemas/MessageResponse'
+        page:
+          $ref: '#/components/schemas/PageMetadata'
+      example:
+        _embedded:
+          messages:
+            - id: 6001
+              senderId: 1001
+              body: "J'aurai un peu de retard. Commencez sans moi"
+              sentAt: "2025-04-24T15:00:00Z"
+              participantStatus:
+                - userId: 1002
+                  readAt: "2025-04-24T15:01:00Z"
+                  deleted: false
+                - userId: 1003
+                  readAt: null
+                  deleted: false
+              _links:
+                self:
+                  href: /conversations/4005/messages/6001
+        _links:
+          self: /conversations/4005/messages
+        page:
+          size: 20
+          totalElements: 1
+          totalPages: 1
+          number: 0          
 
     MessageStatusUpdate:
       type: object
@@ -844,11 +929,9 @@ components:
         readAt:
           type: string
           format: date-time
-        deleted:
-          type: boolean
       example:
         userId: 1002
-        readAt: "2025-04-24T15:01:00Z"
+        readAt: "2025-04-24T15:03:00Z"
 
     MessageStatusResponse:
       type: object
@@ -860,3 +943,20 @@ components:
           properties:
             message:
               $ref: '#/components/schemas/MessageResponse'
+      example:
+        _links:
+          self:
+            href: /conversations/4005/messages/6001/status
+        _embedded:
+          message:
+            id: 6001
+            senderId: 1001
+            body: "J'aurai un peu de retard. Commencez sans moi"
+            sentAt: "2025-04-24T15:00:00Z"
+            participantStatus:
+              - userId: 1002
+                readAt: "2025-04-24T15:01:00Z"
+                deleted: false
+              - userId: 1003
+                readAt: null
+                deleted: false
