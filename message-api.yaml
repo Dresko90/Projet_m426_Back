@@ -14,9 +14,23 @@ servers:
   - url: http://localhost:8080
     description: "Développement"
 
+tags:
+  - name: token
+    description: Gestion des tokens d'authentification
+  - name: user
+    description: Gestion des utilisateur·rice·s 
+  - name: conversation
+    description: Gestion des conversations
+  - name: participant
+    description: Gestion des participant·e·s
+  - name: message
+    description: Gestion des messages
+
 paths:
   /tokens:
     post:
+      tags:
+        - token
       summary: "Créer un token (connexion)."
       requestBody:
         required: true
@@ -40,6 +54,8 @@ paths:
 
   /tokens/me:
     delete:
+      tags:
+        - token
       summary: "Supprimer le token de l'utilisateur·rice connecté·e (déconnexion). Si le token est invalide ou expiré, la requête ne produit pas d'effet."
       security:
         - BearerAuth: []
@@ -51,6 +67,8 @@ paths:
 
   /users:
     post:
+      tags:
+        - user
       summary: "Créer un compte d'utilisateur·rice."
       security:
         - BearerAuth: []
@@ -89,6 +107,8 @@ paths:
 
   /users/{userId}:
     get:
+      tags:
+        - user
       summary: "Obtenir les informations d’un·e utilisateur·rice."
       security:
         - BearerAuth: []
@@ -124,6 +144,8 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
     patch:
+      tags:
+        - user
       summary: "Modifier les informations d’un·e utilisateur·rice."
       security:
         - BearerAuth: []
@@ -175,6 +197,8 @@ paths:
 
   /conversations:
     get:
+      tags:
+        - conversation
       summary: "Récupérer les conversations dans lesquelles l'utilisateur·rice connecté est actif."
       security:
         - BearerAuth: []
@@ -204,6 +228,8 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
     post:
+      tags:
+        - conversation
       summary: "Créer une nouvelle conversation."
       security:
         - BearerAuth: []
@@ -243,6 +269,8 @@ paths:
 
   /conversations/{conversationId}:
     get:
+      tags:
+        - conversation
       summary: "Récupérer les détails d'une conversation."
       security:
         - BearerAuth: []
@@ -279,6 +307,8 @@ paths:
 
   /conversations/{conversationId}/participants:
     get:
+      tags:
+        - participant
       summary: "Récupèrer la liste des participant·e·s d'une conversation."
       security:
         - BearerAuth: []
@@ -315,6 +345,8 @@ paths:
 
   /conversations/{conversationId}/participants/{participantId}:
     get:
+      tags:
+        - participant
       summary: "Récupèrer les détails d'un·e participant·e."
       security:
         - BearerAuth: []
@@ -357,6 +389,8 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
     patch:
+      tags:
+        - participant
       summary: "Modifier le rôle ou le statut d'un·e participant·e."
       security:
         - BearerAuth: []
@@ -405,6 +439,8 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
     delete:
+      tags:
+        - participant
       summary: "Désactiver un·e participant·e (suppression logique)."
       security:
         - BearerAuth: []
@@ -444,6 +480,8 @@ paths:
 
   /conversations/{conversationId}/messages:
     get:
+      tags:
+        - message
       summary: "Récupérer les messages d'une conversation."
       security:
         - BearerAuth: []
@@ -489,6 +527,8 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
     post:
+      tags:
+        - message
       summary: "Ajouter un message à la conversation."
       security:
         - BearerAuth: []
@@ -533,6 +573,8 @@ paths:
 
   /conversations/{conversationId}/messages/{messageId}:
     patch:
+      tags:
+        - message
       summary: "Modifier le statut du message pour le participant spécifié (par défaut l'utilisateur·rice connecté)."
       security:
         - BearerAuth: []
@@ -598,6 +640,8 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
     delete:
+      tags:
+        - message
       summary: "Marquer un message comme étant supprimé (suppression logique)."
       security:
         - BearerAuth: []
@@ -1091,7 +1135,7 @@ components:
         sentAt:
           type: string
           format: date-time
-        participantStatus:
+        status:
           type: array
           items:
             type: object
