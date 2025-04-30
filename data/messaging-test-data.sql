@@ -11,7 +11,6 @@ INSERT INTO user (user_id, username, display_name, user_password, user_role) VAL
 INSERT INTO user (user_id, username, display_name, user_password, user_role) VALUES (16, "daneel@example.com", "daneel", "$2a$10$xqaCFCdUiMEJq85ar7XjhuTiHvD6hzml5Pu4ZbMMYhG.ePUV0uyFC", "USER");
 USE messaging_db;
 
-
 INSERT INTO token (token, user_id) VALUES ('865b1cb2-bd0e-4468-8370-a8ae9ae4bd11', 11);
 
 -- Conversation 100: sheana and idaho

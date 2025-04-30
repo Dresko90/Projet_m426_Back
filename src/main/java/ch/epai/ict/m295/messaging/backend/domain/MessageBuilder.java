@@ -80,6 +80,6 @@ public class MessageBuilder {
             throw new IllegalArgumentException("MessageStatus cannot be null");
         }
 
-        return new Message(id, conversation.getId(), senderId, content, sentAt, messageStatus);
+        return new Message(id, conversationId, senderId, content, sentAt, messageStatus);
     }
 }

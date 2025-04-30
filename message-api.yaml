@@ -11,8 +11,11 @@ info:
 servers:
   - url: https://message-api.n01.lab.epai-ict.ch
     description: "Production"
-  - url: http://localhost:8080
+  - url: https://localhost:8080
     description: "Développement"
+
+security:
+  - BearerAuth: []
 
 tags:
   - name: token
@@ -32,6 +35,7 @@ paths:
       tags:
         - token
       summary: "Créer un token (connexion)."
+      security: []
       requestBody:
         required: true
         content:
@@ -49,6 +53,12 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         "403":
           $ref: '#/components/responses/Forbidden'
+        "406":
+          $ref: '#/components/responses/NotAcceptable'
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
         "500":
           $ref: '#/components/responses/InternalServerError'
 
@@ -62,6 +72,8 @@ paths:
       responses:
         "204":
           description: "Token supprimé"
+        "429":
+          description: "TooManyRequest"
         "500":
           description: "Erreur interne du serveur"
 
@@ -102,6 +114,12 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         "403":
           $ref: '#/components/responses/Forbidden'
+        "406":
+          $ref: '#/components/responses/NotAcceptable'
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'  
         "500":
           $ref: '#/components/responses/InternalServerError'
 
@@ -140,6 +158,10 @@ paths:
               example:
                 code: 404
                 message: "Utilisateur non trouvé"
+        "406":
+          $ref: '#/components/responses/NotAcceptable'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
         "500":
           $ref: '#/components/responses/InternalServerError'
 
@@ -192,6 +214,12 @@ paths:
               example:
                 code: 404
                 message: "Utilisateur non trouvé"
+        "406":
+          $ref: '#/components/responses/NotAcceptable'   
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'  
         "500":
           $ref: '#/components/responses/InternalServerError'
 
@@ -224,6 +252,10 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         "403":
           $ref: '#/components/responses/Forbidden'
+        "406":
+          $ref: '#/components/responses/NotAcceptable'   
+        "429":
+          $ref: '#/components/responses/TooManyRequests'  
         "500":
           $ref: '#/components/responses/InternalServerError'
 
@@ -264,6 +296,12 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         "403":
           $ref: '#/components/responses/Forbidden'
+        "406":
+          $ref: '#/components/responses/NotAcceptable'   
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'  
         "500":
           $ref: '#/components/responses/InternalServerError'
 
@@ -302,6 +340,10 @@ paths:
               example:
                 code: 404
                 message: "Conversation non trouvée"
+        "406":
+          $ref: '#/components/responses/NotAcceptable'   
+        "429":
+          $ref: '#/components/responses/TooManyRequests'  
         "500":
           $ref: '#/components/responses/InternalServerError'
 
@@ -340,6 +382,10 @@ paths:
               example:
                 code: 404
                 message: "Conversation non trouvée"
+        "406":
+          $ref: '#/components/responses/NotAcceptable'   
+        "429":
+          $ref: '#/components/responses/TooManyRequests'  
         "500":
           $ref: '#/components/responses/InternalServerError'
 
@@ -385,6 +431,10 @@ paths:
               example:
                 code: 404
                 message: "Participant·e non trouvé·e"
+        "406":
+          $ref: '#/components/responses/NotAcceptable'   
+        "429":
+          $ref: '#/components/responses/TooManyRequests'  
         "500":
           $ref: '#/components/responses/InternalServerError'
 
@@ -435,6 +485,12 @@ paths:
               example:
                 code: 404
                 message: "Participant·e non trouvé·e"
+        "406":
+          $ref: '#/components/responses/NotAcceptable'   
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'  
         "500":
           $ref: '#/components/responses/InternalServerError'
 
@@ -475,6 +531,10 @@ paths:
               example:
                 code: 404
                 message: "Participant·e non trouvé·e"
+        "406":
+          $ref: '#/components/responses/NotAcceptable'   
+        "429":
+          $ref: '#/components/responses/TooManyRequests'  
         "500":
           $ref: '#/components/responses/InternalServerError'
 
@@ -523,6 +583,10 @@ paths:
               example:
                 code: 404
                 message: "Conversation non trouvée"
+        "406":
+          $ref: '#/components/responses/NotAcceptable'   
+        "429":
+          $ref: '#/components/responses/TooManyRequests'  
         "500":
           $ref: '#/components/responses/InternalServerError'
 
@@ -568,6 +632,12 @@ paths:
               example:
                 code: 404
                 message: "Conversation non trouvée"
+        "406":
+          $ref: '#/components/responses/NotAcceptable'   
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'  
         "500":
           $ref: '#/components/responses/InternalServerError'
 
@@ -636,6 +706,12 @@ paths:
               example:
                 code: 404
                 message: "Conversation ou message non trouvée"
+        "406":
+          $ref: '#/components/responses/NotAcceptable'   
+        "415":
+          $ref: '#/components/responses/UnsupportedMediaType'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'  
         "500":
           $ref: '#/components/responses/InternalServerError'
 
@@ -674,6 +750,10 @@ paths:
               example:
                 code: 404
                 message: "Conversation ou message non trouvé"
+        "406":
+          $ref: '#/components/responses/NotAcceptable'   
+        "429":
+          $ref: '#/components/responses/TooManyRequests'  
         "500":
           $ref: '#/components/responses/InternalServerError'
 
@@ -691,6 +771,7 @@ components:
           type: integer
         message:
           type: string
+      additionalProperties: false
 
     # Basic types
     # These are used to define the basic types used in the API
@@ -720,6 +801,7 @@ components:
           properties:
             href:
               type: string
+          additionalProperties: false
 
     HalCollectionLinks:
       type: object
@@ -749,6 +831,7 @@ components:
           properties:
             href:
               type: string
+      additionalProperties: false
 
     PageMetadata:
       type: object
@@ -761,6 +844,7 @@ components:
           type: integer
         number:
           type: integer
+      additionalProperties: false
       example:
         size: 20
         totalElements: 1
@@ -780,6 +864,8 @@ components:
           $ref: '#/components/schemas/UserNameType'
         password:
           type: string
+      additionalProperties: false
+      
     UserUpdate:
       type: object
       properties:
@@ -787,6 +873,8 @@ components:
           $ref: '#/components/schemas/UserNameType'
         password:
           type: string
+      additionalProperties: false
+
     UserResponse:
       type: object
       properties:
@@ -797,6 +885,7 @@ components:
           $ref: '#/components/schemas/UserNameType'
         _links:
           $ref: '#/components/schemas/HalLinks'
+      additionalProperties: false
       example:
         userId: 1001
         username: "trillian@infinidim.com"
@@ -813,14 +902,17 @@ components:
           $ref: '#/components/schemas/UserNameType'
         password:
           type: string
+      additionalProperties: false
       example:
         username: "trillian@infinidim.com"
         password: "h2G2-42"
+
     TokenResponse:
       type: object
       properties:
         token:
           type: string
+      additionalProperties: false
       example:
         token: "eyJhbGciOiJSUzI1NiIsInR5..."
 
@@ -853,6 +945,7 @@ components:
           $ref: '#/components/schemas/ParticipantRoleType'
         status:
           $ref: '#/components/schemas/ParticipantStatusType'
+      additionalProperties: false
       example:
         userId: 1001
         role: owner
@@ -869,6 +962,7 @@ components:
           $ref: '#/components/schemas/ParticipantRoleType'
         status:
           $ref: '#/components/schemas/ParticipantStatusType'
+      additionalProperties: false
       example:
         username: "trillian@infinidim.ch"
         role: owner
@@ -886,6 +980,7 @@ components:
           $ref: '#/components/schemas/ParticipantRoleType'
         status:
           $ref: '#/components/schemas/ParticipantStatusType'
+      additionalProperties: false
       example:
         role: member
         status: active
@@ -904,7 +999,7 @@ components:
           $ref: '#/components/schemas/ParticipantStatusType'
         _links:
           $ref: '#/components/schemas/HalLinks'
-
+      additionalProperties: false
       example:
         userId: 1001
         username: "trillian@infinidim.ch"
@@ -924,8 +1019,10 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/ParticipantResponse'
+          additionalProperties: false
         _links:
           $ref: '#/components/schemas/HalLinks'
+      additionalProperties: false
       example:
         _embedded:
           participants:
@@ -960,6 +1057,7 @@ components:
             userId:
               type: integer
               format: int64
+          additionalProperties: false
           example:
             userId: 1002
         - type: object
@@ -968,6 +1066,7 @@ components:
           properties:
             username:
               $ref: '#/components/schemas/UserNameType'
+          additionalProperties: false
           example:
             username: "trillian@infinidim.ch"
 
@@ -979,6 +1078,8 @@ components:
           items:
             $ref: '#/components/schemas/ParticipantCreate'
           minItems: 1
+          maxItems: 100
+      additionalProperties: false
       example:
         participants:
           - userId: 1002
@@ -1008,7 +1109,9 @@ components:
                       properties:
                         href:
                           type: string
+                  additionalProperties: false
         - $ref: '#/components/schemas/ParticipantsResponse'
+      additionalProperties: false
       example:
         id: 4005
         _embedded:
@@ -1064,10 +1167,12 @@ components:
                             properties:
                               href:
                                 type: string
+                additionalProperties: false
         page:
           $ref: '#/components/schemas/PageMetadata'
         _links:
           $ref: '#/components/schemas/HalCollectionLinks'
+      additionalProperties: false
       example:
         _embedded:
           conversations:
@@ -1118,6 +1223,7 @@ components:
       properties:
         body:
           type: string
+      additionalProperties: false
       example:
         body: "J'aurai un peu de retard. Commencez sans moi."
 
@@ -1150,6 +1256,7 @@ components:
                 type: boolean
         _links:
           $ref: '#/components/schemas/HalLinks'
+      additionalProperties: false
       example:
         id: 6001
         senderId: 1001
@@ -1178,8 +1285,10 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/MessageResponse'
+          additionalProperties: false
         page:
           $ref: '#/components/schemas/PageMetadata'
+      additionalProperties: false
       example:
         _embedded:
           messages:
@@ -1214,6 +1323,7 @@ components:
         readAt:
           type: string
           format: date-time
+      additionalProperties: false
       example:
         userId: 1002
         readAt: "2025-04-24T15:03:00Z"
@@ -1228,6 +1338,7 @@ components:
           properties:
             message:
               $ref: '#/components/schemas/MessageResponse'
+      additionalProperties: false
       example:
         _links:
           self:
@@ -1277,6 +1388,36 @@ components:
             code: 403
             message: "Accès refusé"
 
+    NotAcceptable:
+      description: "Not Acceptable"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 406
+            message: "Not Acceptable"
+
+    UnsupportedMediaType:
+      description: "Unsupported Media Type"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 415
+            message: "Unsupported Media Type"
+
+    TooManyRequests:
+      description: "Too Many Requests"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 429
+            message: "Too Many Requests"
+
     InternalServerError:
       description: "Erreur interne du serveur"
       content:
@@ -1286,3 +1427,4 @@ components:
           example:
             code: 500
             message: "Erreur interne du serveur"
+

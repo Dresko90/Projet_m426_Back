@@ -1,0 +1,3 @@
+apis:
+  message-api.yaml:
+    alias: instant-messaging-api

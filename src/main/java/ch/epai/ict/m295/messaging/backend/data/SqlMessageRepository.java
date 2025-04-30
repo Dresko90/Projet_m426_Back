@@ -14,7 +14,6 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import ch.epai.ict.m295.messaging.backend.domain.ConversationRepository;
 import ch.epai.ict.m295.messaging.backend.domain.Message;
 import ch.epai.ict.m295.messaging.backend.domain.MessageBuilder;
 import ch.epai.ict.m295.messaging.backend.domain.MessageRepository;
@@ -41,7 +40,7 @@ public class SqlMessageRepository implements MessageRepository {
                         .addValue("messageId", message.getId())
                         .addValue("conversationId", message.getConversationId())
                         .addValue("senderId", message.getSenderId())
-                        .addValue("content", message.getContent())
+                        .addValue("content", message.getBody())
                 );
         
                 for(MessageStatus messageStatus: message.getMessageStatus()) {
@@ -92,7 +91,7 @@ public class SqlMessageRepository implements MessageRepository {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
-    public SqlMessageRepository(JdbcTemplate jdbcTemplate, ConversationRepository conversationRepository) {
+    public SqlMessageRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
     }
 

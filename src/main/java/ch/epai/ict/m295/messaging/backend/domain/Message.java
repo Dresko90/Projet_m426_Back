@@ -8,20 +8,20 @@ public class Message {
     private long id;
     private long conversationId;
     private long senderId;
-    private String content;
+    private String body;
     private LocalDateTime sendAt;
     private List<MessageStatus> messageStatus;
 
 
-    public Message(long id, long conversationId, long senderId, String content, List<MessageStatus> messageStatus) {
-        this(id, conversationId, senderId, content, LocalDateTime.now(), messageStatus);
+    public Message(long id, long conversationId, long senderId, String body, List<MessageStatus> messageStatus) {
+        this(id, conversationId, senderId, body, LocalDateTime.now(), messageStatus);
     }
 
     public Message(long id, long conversationId, long senderId, String content, LocalDateTime sendAt, List<MessageStatus> messageStatus) {
         this.id = id;
         this.conversationId = conversationId;
         this.senderId = senderId;
-        this.content = content;
+        this.body = content;
         this.sendAt = sendAt;
         this.messageStatus = messageStatus;
     }
@@ -38,8 +38,8 @@ public class Message {
         return senderId;
     }
 
-    public String getContent() {
-        return content;
+    public String getBody() {
+        return body;
     }
 
     public LocalDateTime getSentDateTime() {
