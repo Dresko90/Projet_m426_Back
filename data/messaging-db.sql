@@ -42,6 +42,7 @@ CREATE TABLE participant (
     conversation_id BIGINT NOT NULL,
     sender_id       BIGINT NOT NULL,
     body            VARCHAR(2048),
+    send_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     PRIMARY KEY (message_id),
     FOREIGN KEY (conversation_id) 
@@ -54,7 +55,7 @@ CREATE TABLE participant (
 CREATE TABLE message_status (
     message_id      BIGINT NOT NULL,
     user_id         BIGINT NOT NULL,
-    readAt          TIMESTAMP DEFAULT NULL,
+    read_at         TIMESTAMP DEFAULT NULL,
     deleted         BOOLEAN DEFAULT FALSE,
 
     PRIMARY KEY (message_id, user_id),

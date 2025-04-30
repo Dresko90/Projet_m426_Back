@@ -42,12 +42,10 @@ public class TokenController {
     @PostMapping(path = "/tokens", produces = "application/json")
     @ResponseStatus(HttpStatus.CREATED)
     public TokenDto handlePostToken(@RequestBody CredentialDto credentials) {
-        if (this.userRepository.validate(credentials.email(), credentials.password())) {
-
-            User user = this.userRepository.getUserByEmail(credentials.email());
+        if (this.userRepository.validate(credentials.getUsername(), credentials.getPassword())) {
+            User user = this.userRepository.getUserByUsername(credentials.getUsername());
             Token token = Token.randomToken();
             this.tokenRepository.addToken(token, user);
-
             return new TokenDto(token.toString());
         }
         throw new ResponseStatusException(HttpStatusCode.valueOf(401));

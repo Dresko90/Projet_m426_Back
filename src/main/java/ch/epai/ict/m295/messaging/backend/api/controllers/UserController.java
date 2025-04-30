@@ -2,6 +2,7 @@ package ch.epai.ict.m295.messaging.backend.api.controllers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -9,7 +10,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,13 +23,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-
 import ch.epai.ict.m295.messaging.backend.api.dto.CreateUserDto;
-import ch.epai.ict.m295.messaging.backend.api.dto.UserDto;
+import ch.epai.ict.m295.messaging.backend.api.dto.UserResponseDto;
 import ch.epai.ict.m295.messaging.backend.domain.User;
 import ch.epai.ict.m295.messaging.backend.domain.UserBuilder;
 import ch.epai.ict.m295.messaging.backend.domain.UserRepository;
 import ch.epai.ict.m295.messaging.backend.domain.UserRoles;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @RestController
 public class UserController {
@@ -45,8 +48,8 @@ public class UserController {
         @ApiResponse(responseCode = "403", description = "Accès interdit", content = @Content)
     })
     @GetMapping(path = "/users", produces = "application/json")
-    public List<UserDto> handleGetUsers() {
-        return createListOfUserDtoFromListOfUser(this.userRepository.getUsers());
+    public CollectionModel<EntityModel<UserResponseDto>> getUsers(@RequestAttribute User principal) {
+        return toUsersResponse(this.userRepository.getUsers(), principal);
     }
 
     @Operation(summary = "Ajoute un nouvel utilisateur")
@@ -58,19 +61,12 @@ public class UserController {
     @PostMapping(path = "/users", 
             consumes = "application/json", produces = "application/json")
     @ResponseStatus(HttpStatus.CREATED)
-    public UserDto handlePostUsers(@RequestBody CreateUserDto createUserDto) {
+    public EntityModel<UserResponseDto> createUser(@RequestBody CreateUserDto createUserDto, @RequestAttribute User principal) {
         User user = UserBuilder.create()
-            .setEmail(createUserDto.email())
-            .setDisplayName(createUserDto.displayName())
+            .setUsername(createUserDto.username())
             .build();
         this.userRepository.createUser(user, createUserDto.password());
-
-        UserDto res = new UserDto(
-                                user.getId(),
-                                user.getEmail(),
-                                user.getDisplayName());
-
-        return res;
+        return toUserResponse(user, principal);
     }
 
     @Operation(summary = "Récupère un utilisateur")
@@ -80,9 +76,9 @@ public class UserController {
     })
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping(path = "/users/{id}", produces = "application/json")
-    public UserDto handleGetUser(@PathVariable long id, @RequestAttribute User principal) {
+    public EntityModel<UserResponseDto> getUser(@PathVariable long id, @RequestAttribute User principal) {
         if (principal.getId() == id || principal.getRole() == UserRoles.ADMIN ) {
-            return createUserDtoFromUser(this.userRepository.getUser(id));
+            return toUserResponse(this.userRepository.getUser(id), principal);
         }
         throw new ResponseStatusException(HttpStatusCode.valueOf(403));
     }
@@ -95,22 +91,23 @@ public class UserController {
     @SecurityRequirement(name = "bearerAuth")
     @DeleteMapping(path = "/users/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void handleDeleteUser(@PathVariable long id) {
+    public void deleteUser(@PathVariable long id) {
         this.userRepository.deleteUser(id);
     }
 
-    private List<UserDto> createListOfUserDtoFromListOfUser(List<User> userList) {
-        List<UserDto> res = new ArrayList<>();
-        for(User user : userList) {
-            res.add(createUserDtoFromUser(user));
-        }
-        return res;
+    private CollectionModel<EntityModel<UserResponseDto>> toUsersResponse(List<User> userList, User principal) {
+        return CollectionModel.of(
+            userList.stream()
+                .map(user -> toUserResponse(user, principal))
+                .collect(Collectors.toList()));
     }
 
-    private UserDto createUserDtoFromUser(User user) {
-        return new UserDto(
-            user.getId(),
-            user.getEmail(),
-            user.getDisplayName());
+    private EntityModel<UserResponseDto> toUserResponse(User user, User principal) {
+        return EntityModel.of(
+            new UserResponseDto(
+                user.getId(),
+                user.getUsername(),
+                user.getDisplayName()))
+            .add(linkTo(methodOn(UserController.class).getUser(user.getId(), principal)).withSelfRel());
     }
 }

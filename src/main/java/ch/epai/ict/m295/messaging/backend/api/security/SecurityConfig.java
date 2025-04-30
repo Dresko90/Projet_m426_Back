@@ -27,8 +27,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs.yaml", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/tokens").permitAll()
-                .requestMatchers(HttpMethod.GET, "/users").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/users").hasRole("USER")
                 .anyRequest().authenticated())
+
             .addFilterBefore(this.tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .build();
     }

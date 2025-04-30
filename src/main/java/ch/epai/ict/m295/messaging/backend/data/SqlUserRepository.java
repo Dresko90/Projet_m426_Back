@@ -29,7 +29,7 @@ public class SqlUserRepository implements UserRepository, TokenRepository {
         public User mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
             return UserBuilder.create()
                 .setId(rs.getLong("user_id"))
-                .setEmail(rs.getString("email"))
+                .setUsername(rs.getString("username"))
                 .setDisplayName(rs.getString("display_name"))
                 .setRole(UserRoles.valueOf(rs.getString("user_role")))
                 .build();
@@ -56,20 +56,20 @@ public class SqlUserRepository implements UserRepository, TokenRepository {
     }
 
     @Override
-    public User getUserByEmail(String email) {
+    public User getUserByUsername(String username) {
         return this.jdbcTemplate.queryForObject(
-            "SELECT * FROM user WHERE email = :email", 
-            new MapSqlParameterSource("email", email),
+            "SELECT * FROM user WHERE username = :username", 
+            new MapSqlParameterSource("username", username),
             new UserRowMapper());
     }
 
     @Override
     public void createUser(User user, String password) {
         jdbcTemplate.update(
-            "INSERT INTO user (user_id, email, display_name, user_password, user_role) VALUE (:id, :email, :display_name, :user_password, :user_role)",
+            "INSERT INTO user (user_id, username, display_name, user_password, user_role) VALUE (:id, :username, :display_name, :user_password, :user_role)",
             new MapSqlParameterSource()
                 .addValue("id", user.getId())
-                .addValue("email", user.getEmail())
+                .addValue("username", user.getUsername())
                 .addValue("display_name", user.getDisplayName())
                 .addValue("user_password", new BCryptPasswordEncoder().encode(password))
                 .addValue("user_role", user.getRole().name()));
@@ -83,10 +83,10 @@ public class SqlUserRepository implements UserRepository, TokenRepository {
     }
 
     @Override
-    public boolean validate(String email, String password) {
+    public boolean validate(String username, String password) {
         SqlRowSet rs = this.jdbcTemplate.queryForRowSet(
-            "SELECT user_password FROM user WHERE email = :email", 
-            new MapSqlParameterSource("email", email));
+            "SELECT user_password FROM user WHERE username = :username", 
+            new MapSqlParameterSource("username", username));
         if (rs.next()) {
             String cipheredPassword = rs.getString("user_password");
             return new BCryptPasswordEncoder().matches(password, cipheredPassword);
@@ -116,5 +116,17 @@ public class SqlUserRepository implements UserRepository, TokenRepository {
             "SELECT user.* FROM user INNER JOIN token ON token.user_id = user.user_id WHERE token = :token", 
             new MapSqlParameterSource("token", token.toString()),
             new UserRowMapper());
+    }
+
+    @Override
+    public void updateUser(User user) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'updateUser'");
+    }
+
+    @Override
+    public void updateUserPassword(long id, String password) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'updateUserPassword'");
     }
 }

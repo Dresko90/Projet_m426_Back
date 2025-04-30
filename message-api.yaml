@@ -1,4 +1,4 @@
-openapi: 3.0.1
+openapi: 3.0.4
 info:
   title: Instant Messaging API
   description:
@@ -42,7 +42,7 @@ paths:
         "200":
           description: "Token renvoyé"
           content:
-            application/hal+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/TokenResponse'
         "401":

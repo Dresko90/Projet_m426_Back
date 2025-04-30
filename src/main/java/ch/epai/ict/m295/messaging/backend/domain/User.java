@@ -2,13 +2,13 @@ package ch.epai.ict.m295.messaging.backend.domain;
 
 public class User {
     private long id;
-    private String email;
+    private String username;
     private String displayName;
     private UserRoles role;
 
-    public User(long id, String email, String displayName, UserRoles role) {
+    public User(long id, String username, String displayName, UserRoles role) {
         this.id = id;
-        this.email = email;
+        this.username = username;
         this.displayName = displayName;
         this.role = role;
     }
@@ -17,8 +17,8 @@ public class User {
         return this.id;
     }
     
-    public String getEmail() {
-        return this.email;
+    public String getUsername() {
+        return this.username;
     }
 
     public String getDisplayName() {

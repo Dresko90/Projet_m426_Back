@@ -2,7 +2,7 @@ package ch.epai.ict.m295.messaging.backend.domain;
 
 public class UserBuilder {
     private Long id;
-    private String email;
+    private String username;
     private String displayName; 
     private UserRoles role;
 
@@ -19,8 +19,8 @@ public class UserBuilder {
         return this;
     }
 
-    public UserBuilder setEmail(String email) {
-        this.email = email;
+    public UserBuilder setUsername(String username) {
+        this.username = username;
         return this;
     }
 
@@ -38,6 +38,6 @@ public class UserBuilder {
         if (id == null) {
             id = IdGeneratorManager.get(User.class).getNextId();
         }
-        return new User(id, email, displayName, role);
+        return new User(id, username, displayName, role);
     }
 }

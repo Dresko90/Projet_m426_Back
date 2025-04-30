@@ -1,0 +1,27 @@
+End-point
+
+/tokens                                                             POST        Authentification, accept une structure {username, password} et renvoie un token.
+/tokens/{tokenId}                                                   DELETE      Supprime un token (logout)
+
+/users                                                              POST        Crée un utilisateur, accept une structure { username, password } où les deux champs sont obligatoire et renvoie une structure {userId, username} + HAL
+/users/{userId}                                                     GET         Renvoie une structure {userId, username} + HAL, nécessite un bearer token
+                                                                    POST        Modifie les données de l'utilsateur, accept une structure { username, password } où les champs sont optionels et renvoie une structure {userId, username} + HAL, nécessite un bearer token
+
+/conversations                                                      GET         Renvoie la liste des conversation de l'utilisateur authentifié. Renvoie une structure une liste de conversation paginée + HAL. (Voir plus loin pour la structure d'une conversation)
+                                                                    POST        Nouvelle conversation, reçoit une liste de participant (au moins un), l'utilisateur qui crée la converstion est automatiquement ajouté et devient le owner. Si la liste ne contient qu'un participant, il devient automatiquement actif, sinon les paraticipant sont invité. Renvoie une structure de conversation + HAL
+
+/conversations/{conversationId}                                     GET
+
+/conversations/{conversationId}/participants                        GET
+                                                                    POST
+                                                                    
+/conversations/{conversationId}/participants/{participants_id}      GET         Renvoie une structure { userId, username, role, status } + HAL
+                                                                    POST        Modifie le rôle ou le statut du participant 
+                                                                    DELETE      Supprime le participant de la conversation, si le participant n'a pas écrit de message, il est supprimé sinon il est désactivé.
+
+/conversations/{conversationId}/messages                            GET         Renvoie une liste de message paginé + HAL, la structure d'un message est { messageId, senderId, messageBody, sentAt, participantStatus [ { userId, readAt, deleted }, ... ] }
+                                                                    POST        Ajoute un nouveau message. Accept une struncture { messageBody }. Le sender est l'utilisateur authentifié et renvoie une struture de message.
+
+/conversations/{conversationId}/messages/{message_id}               DELETE      Marque le message comme supprimé pour l'utilisateur authentifié.
+
+/conversations/{conversationId}/messages/{message_id}               POST        Modifie le statut du message pour l'utilisateur authentifié.
