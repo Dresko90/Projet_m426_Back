@@ -41,7 +41,7 @@ public class MessageBuilder {
         return this;
     }
 
-    public MessageBuilder setContent(String content) {
+    public MessageBuilder setBody(String content) {
         this.content = content;
         return this;
     }

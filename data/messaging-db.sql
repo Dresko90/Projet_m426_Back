@@ -19,7 +19,8 @@ INSERT INTO user (user_id, username, display_name, user_password, user_role) VAL
 
 CREATE TABLE conversation (
     conversation_id     BIGINT NOT NULL,
-
+    is_group            BOOLEAN DEFAULT FALSE,
+    
     PRIMARY KEY (conversation_id)
 );
 

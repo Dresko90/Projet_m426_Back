@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -70,7 +71,7 @@ public class SqlMessageRepository implements MessageRepository {
                 .setId(rs.getLong("message_id"))
                 .setConversationId(rs.getLong("conversation_id"))
                 .setSenderId(rs.getLong("sender_id"))
-                .setContent(rs.getString("body"))
+                .setBody(rs.getString("body"))
                 .setSentDateTime(rs.getTimestamp("send_at").toLocalDateTime())
                 .setMessageStatus(getMessageStatus(rs.getLong("message_id")))
                 .build();
@@ -90,14 +91,16 @@ public class SqlMessageRepository implements MessageRepository {
     }   
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final PlatformTransactionManager transactionManager;
 
-    public SqlMessageRepository(JdbcTemplate jdbcTemplate) {
+    public SqlMessageRepository(JdbcTemplate jdbcTemplate, PlatformTransactionManager transactionManager) {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+        this.transactionManager = transactionManager;
     }
 
     @Override
     public void createMessage(Message message) {
-        TransactionTemplate transactionTemplate = new TransactionTemplate();
+        TransactionTemplate transactionTemplate = new TransactionTemplate(this.transactionManager);
         CreateMessageTransaction transaction = new CreateMessageTransaction(message);
         transactionTemplate.execute(transaction);
     }

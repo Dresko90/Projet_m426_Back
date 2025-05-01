@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.PortMapperConfigurer.HttpPortMapping;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -26,8 +27,10 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs.yaml", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/tokens").permitAll()
-                .requestMatchers(HttpMethod.GET, "/users").hasRole("USER")
+                .requestMatchers(HttpMethod.POST, "/tokens").permitAll()
+                .requestMatchers(HttpMethod.DELETE, "/tokens/me").permitAll()
+                .requestMatchers(HttpMethod.POST, "/users").permitAll()
+                .requestMatchers(HttpMethod.GET, "/users").hasRole("ADMIN")
                 .anyRequest().permitAll())
 
             .addFilterBefore(this.tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

@@ -6,6 +6,10 @@ public class ParticipantBuilder {
     private Participant.Role role;
     private Participant.Status status;
 
+    public static ParticipantBuilder create() {
+        return new ParticipantBuilder();
+    }
+
     public ParticipantBuilder setId(long id) {
         this.id = id;
         return this;

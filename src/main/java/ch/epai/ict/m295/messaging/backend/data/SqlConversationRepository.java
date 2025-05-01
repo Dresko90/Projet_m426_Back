@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.lang.NonNull;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -39,6 +40,7 @@ public class SqlConversationRepository implements ConversationRepository {
         public Conversation mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
             return ConversationBuilder.create()
                 .setId(rs.getLong("conversation_id"))
+                .setIsGroup(rs.getBoolean("is_group"))
                 .setParticipants(getParticipants(rs.getLong("conversation_id")))
                 .build();
         }
@@ -71,14 +73,16 @@ public class SqlConversationRepository implements ConversationRepository {
     }
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final PlatformTransactionManager transactionManager;
 
-    public SqlConversationRepository(JdbcTemplate jdbcTemplate) {
+    public SqlConversationRepository(JdbcTemplate jdbcTemplate, PlatformTransactionManager transactionManager) {
         this.jdbcTemplate = new NamedParameterJdbcTemplate(jdbcTemplate);
+        this.transactionManager = transactionManager;
     }
 
     @Override
     public void createConversation(Conversation conversation) {
-        TransactionTemplate transactionTemplate = new TransactionTemplate();
+        TransactionTemplate transactionTemplate = new TransactionTemplate(this.transactionManager);
         CreateConversationTransaction transaction = new CreateConversationTransaction(conversation);
         transactionTemplate.execute(transaction);
     }
@@ -95,11 +99,30 @@ public class SqlConversationRepository implements ConversationRepository {
     @Override
     public List<Conversation> findConversationsByUser(User user) {
         return jdbcTemplate.query(
-            "SELECT DISTINCT c.conversation_id " +
+            "SELECT DISTINCT c.* " +
             "FROM conversation c " +
             "INNER JOIN participant p ON c.conversation_id = p.conversation_id " +
             "WHERE p.user_id = :userId",
             new MapSqlParameterSource("userId", user.getId()),
+            new ConversationRowMapper()
+        );
+    }
+
+    @Override
+    public List<Conversation> findConversationsByParticipants(Participant participant1, Participant participant2) {
+        return jdbcTemplate.query(
+            """
+            SELECT c.*
+            FROM conversation c 
+            INNER JOIN participant p1 ON c.conversation_id = p1.conversation_id 
+            INNER JOIN participant p2 ON c.conversation_id = p2.conversation_id 
+            WHERE NOT c.is_group AND p1.user_id = :participantId1 AND p2.user_id = :participantId2
+            ORDER BY c.conversation_id DESC
+            LIMIT 1;
+            """,
+            new MapSqlParameterSource()
+                .addValue("participantId1", participant1.getUserId())
+                .addValue("participantId2", participant2.getUserId()),
             new ConversationRowMapper()
         );
     }

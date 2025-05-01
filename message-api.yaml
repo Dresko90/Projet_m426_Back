@@ -272,17 +272,23 @@ paths:
             schema:
               $ref: '#/components/schemas/ConversationCreate'
             examples:
-              singleParticipant:
-                summary: "Avec un·e seul·e participant·e"
+              singleParticipantId:
+                summary: "Avec un·e seul·e participant·e (id)"
                 value:
-                  userId: 1002
-              multipleParticipants:
+                  userId: 14
+              singleParticipantUsername:
+                summary: "Avec un·e seul·e participant·e (username)"
+                value:
+                  username: "trevize@example.com"
+              multipleParticipantsId:
                 summary: "Avec plusieurs participant·e·s"
                 value:
-                  - userId: 1002
-                    role: owner
-                    status: active
-                  - userId: 1003
+                  participants:
+                    - userId: 14
+                      role: MEMBER
+                      status: ACTIVE
+                    - username: "siona@example.com"
+
       responses:
         "201":
           description: "La conversation a été créée avec succès."
@@ -922,16 +928,16 @@ components:
     ParticipantRoleType:
       type: string
       enum:
-        - owner
-        - member
+        - OWNER
+        - MEMBER
 
     ParticipantStatusType:
       type: string
       enum:
-        - active
-        - inactive
-        - invited
-        - blocked
+        - ACTIVE
+        - INACTIVE
+        - INVITED
+        - BLOCKED
 
     ParticipantCreateFromUserId:
       type: object
@@ -948,8 +954,8 @@ components:
       additionalProperties: false
       example:
         userId: 1001
-        role: owner
-        status: active
+        role: OWNER
+        status: ACTIVE
 
     ParticipantCreateFromUsername:
       type: object
@@ -965,8 +971,8 @@ components:
       additionalProperties: false
       example:
         username: "trillian@infinidim.ch"
-        role: owner
-        status: active
+        role: OWNER
+        status: ACTIVE
 
     ParticipantCreate:
       oneOf:
@@ -982,8 +988,8 @@ components:
           $ref: '#/components/schemas/ParticipantStatusType'
       additionalProperties: false
       example:
-        role: member
-        status: active
+        role: MEMBER
+        status: ACTIVE
 
     ParticipantResponse:
       type: object
@@ -1003,8 +1009,8 @@ components:
       example:
         userId: 1001
         username: "trillian@infinidim.ch"
-        role: owner
-        status: active
+        role: OWNER
+        status: ACTIVE
         _links:
           self:
             href: /conversations/4005/participants/1001
@@ -1028,15 +1034,15 @@ components:
           participants:
             - userId: 1001
               username: "trillian@infinidim.ch"
-              role: owner
-              status: active
+              role: MEMBER
+              status: ACTIVE
               _links:
                 self:
                   href: /conversations/4005/participants/1001
             - userId: 1002
               username: "+41799991234"
-              role: member
-              status: active
+              role: MEMBER
+              status: ACTIVE
               _links:
                 self:
                   href: /conversations/4005/participants/1002
@@ -1082,10 +1088,10 @@ components:
       additionalProperties: false
       example:
         participants:
-          - userId: 1002
-            role: owner
-            status: active
-          - userId: 1003
+          - userId: 14
+            role: MEMBER
+            status: ACTIVE
+          - username: "siona@example.com"
 
     ConversationCreate:
       oneOf:
@@ -1099,6 +1105,9 @@ components:
             id:
               type: integer
               format: int64
+            isGroup:
+              type: boolean
+              default: false
             _links:
               allOf:
                 - $ref: '#/components/schemas/HalLinks'
@@ -1110,23 +1119,24 @@ components:
                         href:
                           type: string
                   additionalProperties: false
+          additionalProperties: false
         - $ref: '#/components/schemas/ParticipantsResponse'
-      additionalProperties: false
       example:
         id: 4005
+        isGroup: false
         _embedded:
           participants:
             - userId: 1001
               username: "trillian@infinidim.ch"
-              role: owner
-              status: active
+              role: MEMBER
+              status: ACTIVE
               _links:
                 self:
                   href: /conversations/4005/participants/1001
             - userId: 1002
               username: "+41799991234"
-              role: member
-              status: active
+              role: MEMBER
+              status: ACTIVE
               _links:
                 self:
                   href: /conversations/4005/participants/1002
@@ -1177,6 +1187,7 @@ components:
         _embedded:
           conversations:
             - id: 4005
+              isGroup: false
               _links:
                 self:
                   href: /conversations/4005
@@ -1186,15 +1197,15 @@ components:
                 participants:
                   - userId: 1001
                     username: "trillian@infinidim.ch"
-                    role: owner
-                    status: active
+                    role: MEMBER
+                    status: ACTIVE
                     _links:
                       self:
                         href: /conversations/4005/participants/1001
                   - userId: 1002
                     username: "+41799991234"
-                    role: member
-                    status: active
+                    role: MEMBER
+                    status: ACTIVE
                     _links:
                       self:
                         href: /conversations/4005/participants/1002

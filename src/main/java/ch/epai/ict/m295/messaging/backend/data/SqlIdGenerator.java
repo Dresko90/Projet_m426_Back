@@ -14,7 +14,9 @@ public class SqlIdGenerator implements IdGenerator {
     private String tableName;
 
     public SqlIdGenerator(JdbcTemplate jdbcTemplate, String tableName) {
+        String dbName = jdbcTemplate.queryForObject("SELECT DATABASE()", String.class);
         this.simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withCatalogName(dbName)
                 .withProcedureName("get_next_id");
         this.tableName = tableName;
     }
@@ -22,10 +24,10 @@ public class SqlIdGenerator implements IdGenerator {
     @Override
     public long getNextId() {
         MapSqlParameterSource parameters = new MapSqlParameterSource()
-            .addValue("entity_name", this.tableName)
-            .addValue("next_id", null);
+            .addValue("in_entity_name", this.tableName)
+            .addValue("out_next_id", null);
 
         Map<String, Object> res = this.simpleJdbcCall.execute(parameters);
-        return (long) res.get("next_id");
+        return (long) res.get("out_next_id");
     }
 }

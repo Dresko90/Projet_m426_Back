@@ -1,22 +1,40 @@
 package ch.epai.ict.m295.messaging.backend.api.controllers;
 
-import org.springframework.hateoas.CollectionModel;
-import org.springframework.web.bind.annotation.*;
-
-import ch.epai.ict.m295.messaging.backend.api.dto.*;
-import ch.epai.ict.m295.messaging.backend.domain.*;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+import ch.epai.ict.m295.messaging.backend.api.dto.CreateMessageDto;
+import ch.epai.ict.m295.messaging.backend.api.dto.MessageResponseDto;
+import ch.epai.ict.m295.messaging.backend.api.dto.MessageStatusDto;
+import ch.epai.ict.m295.messaging.backend.domain.ConversationRepository;
+import ch.epai.ict.m295.messaging.backend.domain.Message;
+import ch.epai.ict.m295.messaging.backend.domain.MessageBuilder;
+import ch.epai.ict.m295.messaging.backend.domain.MessageRepository;
+import ch.epai.ict.m295.messaging.backend.domain.MessageStatus;
+import ch.epai.ict.m295.messaging.backend.domain.User;
 
 @RestController
 public class MessageController {
 
+    private final ConversationRepository conversationRepository;
     private final MessageRepository messageRepository;
 
-    public MessageController(MessageRepository messageRepository) {
+    public MessageController(ConversationRepository conversationRepository, MessageRepository messageRepository) {
+        this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
     }
 
@@ -25,9 +43,21 @@ public class MessageController {
         List<Message> messages = messageRepository.getMessages(conversationId);
         return CollectionModel.of(
                 messages.stream()
-                    .map(conversation -> toMessageResponse(conversation, principal))
+                    .map(conversation -> toMessageResponse(conversation))
                     .collect(Collectors.toList()),
                 linkTo(methodOn(MessageController.class).getMessages(conversationId, principal)).withSelfRel());
+    }
+
+    @PostMapping("/conversations/{conversationId}/messages")
+    @ResponseStatus(HttpStatus.CREATED)
+    public MessageResponseDto createMessages(@PathVariable long conversationId, @RequestBody CreateMessageDto createMessageDto, @RequestAttribute User principal) {
+        Message message = MessageBuilder.create()
+            .setConversation(conversationRepository.getConversation(conversationId))
+            .setSenderId(principal.getId())
+            .setBody(createMessageDto.body())
+            .build();
+        messageRepository.createMessage(message);
+        return toMessageResponse(message);
     }
 
     @PatchMapping("/conversations/{conversationId}/messages/{messageId}")
@@ -35,7 +65,7 @@ public class MessageController {
         return null;
     }
 
-    private MessageResponseDto toMessageResponse(Message message, User principal) {
+    private MessageResponseDto toMessageResponse(Message message) {
         return new MessageResponseDto(
             message.getId(), 
             message.getSenderId(),
@@ -45,11 +75,9 @@ public class MessageController {
                 .stream()
                 .map(messageStatus -> toMessageStatusDto(messageStatus))
                 .collect(Collectors.toList()))
-            .add(linkTo(methodOn(MessageController.class).getMessage(message.getConversationId(), message.getId(),  principal)).withSelfRel());
+            .add(linkTo(methodOn(MessageController.class).getMessage(message.getConversationId(), message.getId(), null)).withSelfRel());
 
     }
-
-
 
     private MessageStatusDto toMessageStatusDto(MessageStatus messageStatus) {
         return new MessageStatusDto(
@@ -57,102 +85,4 @@ public class MessageController {
             messageStatus.getReadAt(),
             messageStatus.isDeleted());
     }
-
-    // // POST /conversations
-    // @PostMapping
-    // @ResponseStatus(HttpStatus.CREATED)
-    // public EntityModel<ConversationResponseDto> createConversation(
-    //         @RequestBody CreateConversationDto createConversationDto, 
-    //         @RequestAttribute User principal) {
-
-    //     ConversationBuilder builder = ConversationBuilder.create();
-    //     builder.addParticipant(
-    //         new Participant(
-    //             principal.getId(), 
-    //             principal.getUsername(), 
-    //             Participant.Role.OWNER, 
-    //             Participant.Status.ACTIVE));
-
-    //     for (Long participantId : createConversationDto.getParticipants()) {
-    //         User participant = userRepository.getUser(participantId);
-    //         builder.addParticipant(
-    //             new Participant(
-    //                 participant.getId(), 
-    //                 participant.getUsername(), 
-    //                 Participant.Role.MEMBER, 
-    //                 Participant.Status.INVITED));
-    //     }
-
-    //     Conversation conversation = builder.build();
-    //     conversationRepository.createConversation(conversation);
-
-    //     return toConversationResponse(conversation, principal);
-    // }
-
-    // // GET /conversations/{conversationId}
-    // @GetMapping("/{conversationId}")
-    // public EntityModel<ConversationResponseDto> getConversation(@PathVariable long conversationId, @RequestAttribute User principal) {
-    //     Conversation conversation = conversationRepository.getConversation(conversationId);
-
-    //     if (conversation.getParticipants().stream().noneMatch(p -> p.getUserId() == principal.getId())) {
-    //         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this conversation");
-    //     }
-
-    //     return toConversationResponse(conversation, principal);
-    // }
-
-    // // GET /conversations/{conversationId}/participants
-    // @GetMapping("/{conversationId}/participants")
-    // public CollectionModel<EntityModel<ParticipantResponseDto>> getParticipants(@PathVariable long conversationId, @RequestAttribute User principal) {
-    //     Conversation conversation = conversationRepository.getConversation(conversationId);
-
-    //     if (conversation.getParticipants().stream().noneMatch(p -> p.getUserId() == principal.getId())) {
-    //         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this conversation");
-    //     }
-
-    //     List<EntityModel<ParticipantResponseDto>> participantModels = conversation.getParticipants().stream()
-    //             .map(participant -> toParticipantResponse(conversation, participant, principal))
-    //             .collect(Collectors.toList());
-
-    //     return CollectionModel.of(participantModels,
-    //             linkTo(methodOn(MessageController.class).getParticipants(conversationId, principal)).withSelfRel());
-    // }
-
-    // // GET /conversations/{conversationId}/participants/{participantId}
-    // @GetMapping("/{conversationId}/participants/{participantId}")
-    // public EntityModel<ParticipantResponseDto> getParticipant(@PathVariable long conversationId, @PathVariable long participantId, @RequestAttribute User principal) {
-    //     Conversation conversation = conversationRepository.getConversation(conversationId);
-
-    //     if (conversation.getParticipants().stream().noneMatch(p -> p.getUserId() == principal.getId())) {
-    //         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this conversation");
-    //     }
-
-    //     Participant participant = conversation.getParticipants().stream()
-    //             .filter(p -> p.getUserId() == participantId)
-    //             .findFirst()
-    //             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Participant not found"));
-
-    //     return toParticipantResponse(conversation, participant, principal);
-    // }
-
-    // private EntityModel<ConversationResponseDto> toConversationResponse(Conversation conversation, User principal) {
-    //     return EntityModel.of(
-    //         new ConversationResponseDto(
-    //             conversation.getId(),
-    //             conversation.getParticipants().stream()
-    //                     .map(participant -> toParticipantResponse(conversation, participant, principal))
-    //                     .collect(Collectors.toList())))
-    //         .add(linkTo(methodOn(MessageController.class).getConversation(conversation.getId(), principal)).withSelfRel())
-    //         .add(linkTo(methodOn(MessageController.class).getParticipants(conversation.getId(), principal)).withRel("participants"));
-    // }
-
-    // private EntityModel<ParticipantResponseDto> toParticipantResponse(Conversation conversation, Participant participant, User principal) {
-    //     return EntityModel.of(
-    //         new ParticipantResponseDto(
-    //             participant.getUserId(),
-    //             participant.getUserName(),
-    //             participant.getRole().toString(),
-    //             participant.getStatus().toString()))
-    //         .add(linkTo(methodOn(MessageController.class).getParticipant(conversation.getId(), participant.getUserId(), principal)).withSelfRel());
-    // }
 }

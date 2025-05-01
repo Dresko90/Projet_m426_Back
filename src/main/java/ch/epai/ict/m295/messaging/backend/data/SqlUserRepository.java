@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -17,10 +18,9 @@ import ch.epai.ict.m295.messaging.backend.domain.User;
 import ch.epai.ict.m295.messaging.backend.domain.UserBuilder;
 import ch.epai.ict.m295.messaging.backend.domain.UserRepository;
 import ch.epai.ict.m295.messaging.backend.domain.UserRoles;
-import ch.epai.ict.m295.messaging.backend.domain.security.Token;
-import ch.epai.ict.m295.messaging.backend.domain.security.TokenRepository;
 
-public class SqlUserRepository implements UserRepository, TokenRepository {
+
+public class SqlUserRepository implements UserRepository {
 
     private class UserRowMapper implements RowMapper<User> {
 
@@ -49,18 +49,26 @@ public class SqlUserRepository implements UserRepository, TokenRepository {
 
     @Override
     public User getUser(long id) {
-        return this.jdbcTemplate.queryForObject(
-            "SELECT * FROM user WHERE user_id = :id", 
-            new MapSqlParameterSource("id", id),
-            new UserRowMapper());
+        try {
+            return this.jdbcTemplate.queryForObject(
+                "SELECT * FROM user WHERE user_id = :id", 
+                new MapSqlParameterSource("id", id),
+                new UserRowMapper());
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 
     @Override
     public User getUserByUsername(String username) {
-        return this.jdbcTemplate.queryForObject(
-            "SELECT * FROM user WHERE username = :username", 
-            new MapSqlParameterSource("username", username),
-            new UserRowMapper());
+        try {
+            return this.jdbcTemplate.queryForObject(
+                "SELECT * FROM user WHERE username = :username", 
+                new MapSqlParameterSource("username", username),
+                new UserRowMapper());
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 
     @Override
@@ -78,7 +86,7 @@ public class SqlUserRepository implements UserRepository, TokenRepository {
     @Override
     public void deleteUser(long id) {
         jdbcTemplate.update(
-            "DELETE user WHERE id = :id)",
+            "DELETE FROM user WHERE id = :id)",
             new MapSqlParameterSource("id", id));
     }
 
@@ -95,38 +103,21 @@ public class SqlUserRepository implements UserRepository, TokenRepository {
     }
 
     @Override
-    public void deleteToken(Token token) {
-        jdbcTemplate.update(
-            "DELETE token WHERE token = :token)",
-            new MapSqlParameterSource("token", token.toString()));
-    }
-
-    @Override
-    public void addToken(Token token, User user) {
-        jdbcTemplate.update(
-            "INSERT INTO token (user_id, token) VALUE (:user_id, :token)",
-            new MapSqlParameterSource()
-                .addValue("user_id", user.getId())
-                .addValue("token", token.toString()));
-    }
-
-    @Override
-    public User getUserFromToken(Token token) {
-        return this.jdbcTemplate.queryForObject(
-            "SELECT user.* FROM user INNER JOIN token ON token.user_id = user.user_id WHERE token = :token", 
-            new MapSqlParameterSource("token", token.toString()),
-            new UserRowMapper());
-    }
-
-    @Override
     public void updateUser(User user) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'updateUser'");
+        jdbcTemplate.update(
+            "UPDATE user SET username = :username, display_name = :display_name WHERE user_id = :id",
+            new MapSqlParameterSource()
+                .addValue("id", user.getId())
+                .addValue("username", user.getUsername())
+                .addValue("display_name", user.getDisplayName()));
     }
 
     @Override
     public void updateUserPassword(long id, String password) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'updateUserPassword'");
+        jdbcTemplate.update(
+            "UPDATE user SET user_password = :user_password WHERE user_id = :id",
+            new MapSqlParameterSource()
+                .addValue("id", id)
+                .addValue("user_password", new BCryptPasswordEncoder().encode(password)));
     }
 }

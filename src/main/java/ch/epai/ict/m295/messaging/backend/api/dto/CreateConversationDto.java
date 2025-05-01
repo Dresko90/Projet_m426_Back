@@ -3,21 +3,29 @@ package ch.epai.ict.m295.messaging.backend.api.dto;
 import java.util.List;
 
 public class CreateConversationDto {
-    private List<Long> participants;
+    private Long userId;
+    private String username;
+    private List<ParticipantDto> participants;
 
-    public CreateConversationDto() {
-        // Constructeur par défaut requis pour la désérialisation JSON
-    }
-
-    public CreateConversationDto(List<Long> participants) {
+    public CreateConversationDto(Long userId, String username, List<ParticipantDto> participants) {
+        this.userId = userId;
+        this.username = username;
         this.participants = participants;
     }
 
-    public List<Long> getParticipants() {
+    public Boolean isGroup() {
+        return participants != null && participants.size() > 0;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public List<ParticipantDto> getParticipants() {
         return participants;
-    }
-
-    public void setParticipants(List<Long> participants) {
-        this.participants = participants;
     }
 }

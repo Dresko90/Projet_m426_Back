@@ -5,6 +5,7 @@ import java.util.List;
 
 public class ConversationBuilder {
     private Long id;
+    private Boolean isGroup;
     private List<Participant> participants;
 
     public static ConversationBuilder create() {
@@ -17,6 +18,11 @@ public class ConversationBuilder {
 
     public ConversationBuilder setId(long id) {
         this.id = id;
+        return this;
+    }
+
+    public ConversationBuilder setIsGroup(boolean isGroup) {
+        this.isGroup = isGroup;
         return this;
     }
 
@@ -34,6 +40,9 @@ public class ConversationBuilder {
         if (id == null) {
             id = IdGeneratorManager.get(Conversation.class).getNextId();
         }
-        return new Conversation(id, participants);
+        if (isGroup == null) {
+            isGroup = false;
+        }
+        return new Conversation(id, isGroup, participants);
     }
 }

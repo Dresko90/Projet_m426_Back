@@ -12,15 +12,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Relation(collectionRelation = "conversations")
 public class ConversationResponseDto extends RepresentationModel<ConversationResponseDto> {
     private long id;
+    private boolean isGroup;
     private List<EntityModel<ParticipantResponseDto>> participants;
 
-    public ConversationResponseDto(long id, List<EntityModel<ParticipantResponseDto>> participants) {
+    public ConversationResponseDto(long id, boolean isGroup, List<EntityModel<ParticipantResponseDto>> participants) {
         this.id = id;
+        this.isGroup = isGroup;
         this.participants = participants;
     }
 
     public long getId() {
         return id;
+    }
+ 
+    public boolean isGroup() {
+        return isGroup;
     }
 
     @JsonProperty("_embedded")

@@ -6,6 +6,7 @@ public interface ConversationRepository {
     void createConversation(Conversation conversation);
     Conversation getConversation(long conversationId);
     List<Conversation> findConversationsByUser(User user);
+    List<Conversation> findConversationsByParticipants(Participant participant1, Participant participant2);
     void updateConversation(Conversation conversation);
     void addParticipant(long conversationId, Participant participant);
     void removeParticipant(long conversationId, long userId);
