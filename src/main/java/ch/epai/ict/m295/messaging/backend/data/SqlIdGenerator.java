@@ -13,6 +13,7 @@ public class SqlIdGenerator implements IdGenerator {
     private SimpleJdbcCall simpleJdbcCall;
     private String tableName;
 
+    @SuppressWarnings("null")
     public SqlIdGenerator(JdbcTemplate jdbcTemplate, String tableName) {
         String dbName = jdbcTemplate.queryForObject("SELECT DATABASE()", String.class);
         this.simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate)
