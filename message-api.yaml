@@ -1,40 +1,44 @@
 openapi: 3.0.4
+x-stoplight:
+  id: b2ftpffer1wyu
 info:
   title: Instant Messaging API
-  description:
-    "API REST pour une messagerie instantanée avec gestion des utilisateurs, des conversations et des messages."
+  description: |
+    Spécification d'une API REST pour une messagerie instantanée qui comprend la gestion des utilisateur·rice·s, des conversations et des messages. Cette API est utilisée dans le cadre des modules 194, 195, 322, et 426. 
   version: 1.0.0
   contact:
-    name: "Jérôme Frossard"
-    email: jerome.frossard@epai.ch
-
+    name: Jérôme Frossard
+    email: jerome.frossard@edufr.ch
+    url: 'https://www.epai-ict.ch'
+  license:
+    name: Apache 2.0
+    url: 'https://www.apache.org/licenses/LICENSE-2.0'
 servers:
-  - url: https://message-api.n01.lab.epai-ict.ch
-    description: "Production"
-  - url: https://localhost:8080
-    description: "Développement"
-
+  - url: 'https://message-api.n01.lab.epai-ict.ch'
+    description: Production
+  - url: 'https://localhost:8080'
+    description: Développement
 security:
   - BearerAuth: []
-
 tags:
+  - name: conversation
+    description: Gestion des conversations
+  - name: message
+    description: Gestion des messages
+  - name: participant
+    description: Gestion des participant·e·s
   - name: token
     description: Gestion des tokens d'authentification
   - name: user
-    description: Gestion des utilisateur·rice·s 
-  - name: conversation
-    description: Gestion des conversations
-  - name: participant
-    description: Gestion des participant·e·s
-  - name: message
-    description: Gestion des messages
-
+    description: Gestion des utilisateur·rice·s
 paths:
   /tokens:
     post:
       tags:
         - token
-      summary: "Créer un token (connexion)."
+      operationId: login
+      summary: Crée un token (connexion).
+      description: "Renvoie un token d'authentification si le nom d'utilsateur et le mot de passe sont valides."
       security: []
       requestBody:
         required: true
@@ -43,47 +47,57 @@ paths:
             schema:
               $ref: '#/components/schemas/TokenRequest'
       responses:
-        "200":
-          description: "Token renvoyé"
+        '200':
+          description: Token renvoyé
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TokenResponse'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "406":
+        '406':
           $ref: '#/components/responses/NotAcceptable'
-        "415":
+        '415':
           $ref: '#/components/responses/UnsupportedMediaType'
-        "429":
+        '429':
           $ref: '#/components/responses/TooManyRequests'
-        "500":
+        default:
           $ref: '#/components/responses/InternalServerError'
-
+      x-stoplight:
+        id: y6lc9ujtruw01
   /tokens/me:
     delete:
       tags:
         - token
-      summary: "Supprimer le token de l'utilisateur·rice connecté·e (déconnexion). Si le token est invalide ou expiré, la requête ne produit pas d'effet."
-      security:
-        - BearerAuth: []
+      operationId: logout
+      summary: Supprime le token de l'utilisateur·rice connecté·e (déconnexion).
+      description: "Supprime le token de l'utilisateur·rice connecté·e (déconnexion). Si le token est invalide ou expiré, la requête ne produit pas d'effet."
       responses:
-        "204":
-          description: "Token supprimé"
-        "429":
-          description: "TooManyRequest"
-        "500":
-          description: "Erreur interne du serveur"
-
+        '201':
+          description: Token supprimé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: Token supprimé avec succès
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          $ref: '#/components/responses/InternalServerError'
+      x-stoplight:
+        id: ovlh9crcrldsw
   /users:
     post:
       tags:
         - user
-      summary: "Créer un compte d'utilisateur·rice."
-      security:
-        - BearerAuth: []
+      operationId: create-users
+      summary: Crée un compte d'utilisateur·rice.
+      description: "Crée un compte d'utilisateur·rice avec un nom d'utilisateur et un mot de passe. Le nom d'utilisateur peut être soit une adresse e-mail, soit un numéro de téléphone au format E.164."
+      security: []
       requestBody:
         required: true
         content:
@@ -92,92 +106,100 @@ paths:
               $ref: '#/components/schemas/UserCreate'
             examples:
               exemple1:
-                summary: "Création du compte avec un email"
+                summary: Création du compte avec un email
                 value:
-                  username: "trillian@infinidim.ch"
-                  password: "h2G2-42"
+                  username: trillian@infinidim.ch
+                  password: h2G2-42*
               exemple2:
-                summary: "Création du compte avec un numéro de téléphone"
+                summary: Création du compte avec un numéro de téléphone
                 value:
-                  username: "+41799991234"
-                  password: "h2G2-42"
+                  username: '+41799991234'
+                  password: h2G2-42*
       responses:
-        "201":
-          description: "Le compte a été créé avec succès."
+        '201':
+          description: Le compte a été créé avec succès.
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
-        "400":
+        '400':
           $ref: '#/components/responses/BadRequest'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "406":
+        '406':
           $ref: '#/components/responses/NotAcceptable'
-        "415":
+        '415':
           $ref: '#/components/responses/UnsupportedMediaType'
-        "429":
-          $ref: '#/components/responses/TooManyRequests'  
-        "500":
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
           $ref: '#/components/responses/InternalServerError'
-
-  /users/{userId}:
+      x-stoplight:
+        id: wjt0msnjwkgr0
+  '/users/{userId}':
     get:
       tags:
         - user
-      summary: "Obtenir les informations d’un·e utilisateur·rice."
-      security:
-        - BearerAuth: []
+      operationId: get-user
+      summary: Récupère les informations d’un·e utilisateur·rice.
+      description: "Récupère les informations d'un·e utilisateur·rice à partir de son identifiant."
       parameters:
         - name: userId
+          description: Identifiant de l'utilisateur
           in: path
           required: true
           schema:
             type: integer
             format: int64
+            minimum: 0
+            maximum: 9223372036854776000
           example: 1001
       responses:
-        "200":
-          description: "Les détails de l'utilisateur·rice."
+        '200':
+          description: Les détails de l'utilisateur·rice.
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
-          description: "Utilisateur·rice non trouvé·e"
+        '404':
+          description: Utilisateur·rice non trouvé·e
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 code: 404
-                message: "Utilisateur non trouvé"
-        "406":
+                message: Utilisateur non trouvé
+        '406':
           $ref: '#/components/responses/NotAcceptable'
-        "429":
+        '429':
           $ref: '#/components/responses/TooManyRequests'
-        "500":
+        default:
           $ref: '#/components/responses/InternalServerError'
-
+      x-stoplight:
+        id: fpjilr4xetwgy
     patch:
       tags:
         - user
-      summary: "Modifier les informations d’un·e utilisateur·rice."
-      security:
-        - BearerAuth: []
+      operationId: update-user
+      summary: Modifie les informations d'un·e utilisateur·rice.
+      description: "Modifie les informations d'un·e utilisateur·rice à partir de son identifiant."
       parameters:
         - name: userId
+          description: Identifiant de l'utilisateur
           in: path
           required: true
           schema:
             type: integer
             format: int64
+            minimum: 0
+            maximum: 9223372036854776000
           example: 1001
       requestBody:
         required: true
@@ -187,84 +209,94 @@ paths:
               $ref: '#/components/schemas/UserUpdate'
             examples:
               changePassword:
-                summary: "Modification du mot de passe"
+                summary: Modification du mot de passe
                 value:
-                  password: "h2G2-42"
+                  password: h2G2-42*
               changeUsername:
-                summary: "Modification du nom d'utilisateur"
+                summary: Modification du nom d'utilisateur
                 value:
-                  username: "tricia@infinidim.com"
+                  username: tricia@infinidim.com
       responses:
-        "200":
-          description: "Les informations de l'utilisateur·rice ont été modifiées avec succès."
+        '200':
+          description: Les informations de l'utilisateur·rice ont été modifiées avec succès.
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
-          description: "Utilisateur·rice non trouvé·e"
+        '404':
+          description: Utilisateur·rice non trouvé·e
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 code: 404
-                message: "Utilisateur non trouvé"
-        "406":
-          $ref: '#/components/responses/NotAcceptable'   
-        "415":
+                message: Utilisateur non trouvé
+        '406':
+          $ref: '#/components/responses/NotAcceptable'
+        '415':
           $ref: '#/components/responses/UnsupportedMediaType'
-        "429":
-          $ref: '#/components/responses/TooManyRequests'  
-        "500":
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
           $ref: '#/components/responses/InternalServerError'
-
+      x-stoplight:
+        id: 0geswrhml88nz
   /conversations:
     get:
       tags:
         - conversation
-      summary: "Récupérer les conversations dans lesquelles l'utilisateur·rice connecté est actif."
-      security:
-        - BearerAuth: []
+      operationId: get-conversations
+      summary: Récupère les conversations de l'utilisateur·rice.
+      description: "Récupère les conversations dans lesquelles l'utilisateur·rice connecté·e est actif·ve."
       parameters:
         - name: page
+          description: Numéro de la page (commence à 0).
           in: query
           schema:
             type: integer
+            format: int32
+            minimum: 0
+            maximum: 100
             default: 0
         - name: size
+          description: Nombre d'éléments par page (20 par défaut).
           in: query
           schema:
             type: integer
+            format: int32
+            minimum: 20
+            maximum: 100
             default: 20
       responses:
-        "200":
-          description: "Une liste paginée des conversations."
+        '200':
+          description: Une liste paginée des conversations.
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/ConversationsResponse'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "406":
-          $ref: '#/components/responses/NotAcceptable'   
-        "429":
-          $ref: '#/components/responses/TooManyRequests'  
-        "500":
+        '406':
+          $ref: '#/components/responses/NotAcceptable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
           $ref: '#/components/responses/InternalServerError'
-
+      x-stoplight:
+        id: k02ba1i1nu0aw
     post:
       tags:
         - conversation
-      summary: "Créer une nouvelle conversation."
-      security:
-        - BearerAuth: []
+      operationId: create-conversation
+      summary: Crée une nouvelle conversation.
+      description: "Crée une nouvelle conversation avec un ou plusieurs participant·e·s. Le nom d'utilisateur peut être soit une adresse e-mail, soit un numéro de téléphone au format E.164."
       requestBody:
         required: true
         content:
@@ -272,343 +304,334 @@ paths:
             schema:
               $ref: '#/components/schemas/ConversationCreate'
             examples:
+              singleParticipantUsername:
+                summary: Avec un·e seul·e participant·e (username)
+                value:
+                  username: trevize@example.com
               singleParticipantId:
-                summary: "Avec un·e seul·e participant·e (id)"
+                summary: Avec un·e seul·e participant·e (id)
                 value:
                   userId: 14
-              singleParticipantUsername:
-                summary: "Avec un·e seul·e participant·e (username)"
-                value:
-                  username: "trevize@example.com"
               multipleParticipantsId:
-                summary: "Avec plusieurs participant·e·s"
+                summary: Avec plusieurs participant·e·s
                 value:
                   participants:
                     - userId: 14
                       role: MEMBER
                       status: ACTIVE
-                    - username: "siona@example.com"
-
+                    - username: siona@example.com
       responses:
-        "201":
-          description: "La conversation a été créée avec succès."
+        '201':
+          description: La conversation a été créée avec succès.
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/ConversationsResponse'
-        "400":
+        '400':
           $ref: '#/components/responses/BadRequest'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "406":
-          $ref: '#/components/responses/NotAcceptable'   
-        "415":
+        '406':
+          $ref: '#/components/responses/NotAcceptable'
+        '415':
           $ref: '#/components/responses/UnsupportedMediaType'
-        "429":
-          $ref: '#/components/responses/TooManyRequests'  
-        "500":
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
           $ref: '#/components/responses/InternalServerError'
-
-  /conversations/{conversationId}:
+      x-stoplight:
+        id: jxoqojvljt2st
+  '/conversations/{conversationId}':
     get:
       tags:
         - conversation
-      summary: "Récupérer les détails d'une conversation."
-      security:
-        - BearerAuth: []
+      operationId: get-conversation
+      summary: Récupère les détails d'une conversation.
+      description: "Récupère les détails d'une conversation à partir de son identifiant."
       parameters:
         - name: conversationId
+          description: Identifiant de la conversation.
           in: path
           required: true
           schema:
             type: integer
             format: int64
+            minimum: 0
+            maximum: 9223372036854776000
           example: 4005
       responses:
-        "200":
-          description: "Les détails de la conversation."
+        '200':
+          description: Les détails de la conversation.
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/ConversationResponse'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
-          description: "Conversation non trouvée"
+        '404':
+          description: Conversation non trouvée
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 code: 404
-                message: "Conversation non trouvée"
-        "406":
-          $ref: '#/components/responses/NotAcceptable'   
-        "429":
-          $ref: '#/components/responses/TooManyRequests'  
-        "500":
+                message: Conversation non trouvée
+        '406':
+          $ref: '#/components/responses/NotAcceptable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
           $ref: '#/components/responses/InternalServerError'
-
-  /conversations/{conversationId}/participants:
+      x-stoplight:
+        id: bm8lkososxr45
+  '/conversations/{conversationId}/participants':
     get:
       tags:
         - participant
-      summary: "Récupèrer la liste des participant·e·s d'une conversation."
-      security:
-        - BearerAuth: []
+      operationId: get-participants
+      summary: Récupèrer la liste des participant·e·s d'une conversation.
+      description: "Récupère la liste des participant·e·s d'une conversation à partir de son identifiant."
       parameters:
         - name: conversationId
+          description: Identifiant de la conversation.
           in: path
           required: true
           schema:
             type: integer
             format: int64
+            minimum: 0
+            maximum: 9223372036854776000
           example: 4005
       responses:
-        "200":
-          description: "La liste des participant·e·s de la conversation."
+        '200':
+          description: La liste des participant·e·s de la conversation.
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/ParticipantsResponse'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
-          description: "Conversation non trouvée"
+        '404':
+          description: Conversation non trouvée
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 code: 404
-                message: "Conversation non trouvée"
-        "406":
-          $ref: '#/components/responses/NotAcceptable'   
-        "429":
-          $ref: '#/components/responses/TooManyRequests'  
-        "500":
+                message: Conversation non trouvée
+        '406':
+          $ref: '#/components/responses/NotAcceptable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
           $ref: '#/components/responses/InternalServerError'
-
-  /conversations/{conversationId}/participants/{participantId}:
-    get:
-      tags:
-        - participant
-      summary: "Récupèrer les détails d'un·e participant·e."
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: conversationId
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-          example: 4005
-        - name: participantId
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-          example: 1001
-      responses:
-        "200":
-          description: "Les détails de lea participant·e."
-          content:
-            application/hal+json:
-              schema:
-                $ref: '#/components/schemas/ParticipantResponse'
-        "401":
-          $ref: '#/components/responses/Unauthorized'
-        "403":
-          $ref: '#/components/responses/Forbidden'
-        "404":
-          description: "Participant·e non trouvé·e"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                code: 404
-                message: "Participant·e non trouvé·e"
-        "406":
-          $ref: '#/components/responses/NotAcceptable'   
-        "429":
-          $ref: '#/components/responses/TooManyRequests'  
-        "500":
-          $ref: '#/components/responses/InternalServerError'
-
+      x-stoplight:
+        id: jkske4smpnaf6
+  '/conversations/{conversationId}/participants/{participantId}':
     patch:
       tags:
         - participant
-      summary: "Modifier le rôle ou le statut d'un·e participant·e."
+      operationId: update-participant
+      summary: Modifie le rôle ou le statut d'un·e participant·e.
+      description: "Modifie le rôle ou le statut d'un·e participant·e à partir de son identifiant."
       security:
         - BearerAuth: []
       parameters:
         - name: conversationId
+          description: Identifiant de la conversation.
           in: path
           required: true
           schema:
             type: integer
             format: int64
+            minimum: 0
+            maximum: 9223372036854776000
           example: 4005
         - name: participantId
+          description: Identifiant du participant.
           in: path
           required: true
           schema:
             type: integer
             format: int64
+            minimum: 0
+            maximum: 9223372036854776000
           example: 1001
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ParticipantCreate'
+              $ref: '#/components/schemas/ParticipantUpdate'
       responses:
-        "200":
-          description: "Le rôle ou le statut de lea participant·e a été modifié avec succès."
+        '200':
+          description: Le rôle ou le statut de lea participant·e a été modifié avec succès.
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/ParticipantResponse'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":  
-          description: "Participant·e non trouvé·e"
+        '404':
+          description: Participant·e non trouvé·e
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 code: 404
-                message: "Participant·e non trouvé·e"
-        "406":
-          $ref: '#/components/responses/NotAcceptable'   
-        "415":
+                message: Participant·e non trouvé·e
+        '406':
+          $ref: '#/components/responses/NotAcceptable'
+        '415':
           $ref: '#/components/responses/UnsupportedMediaType'
-        "429":
-          $ref: '#/components/responses/TooManyRequests'  
-        "500":
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
           $ref: '#/components/responses/InternalServerError'
-
+      x-stoplight:
+        id: koi6l7owbkshz
     delete:
       tags:
         - participant
-      summary: "Désactiver un·e participant·e (suppression logique)."
-      security:
-        - BearerAuth: []
+      operationId: deactivate-participant
+      summary: Désactive un·e participant·e
+      description: "Désactive un·e participant·e à partir de son identifiant (suppression logique)."
       parameters:
         - name: conversationId
+          description: Identifiant de la conversation.
           in: path
           required: true
           schema:
             type: integer
             format: int64
+            minimum: 0
+            maximum: 9223372036854776000
           example: 4005
         - name: participantId
+          description: Identifiant du participant.
           in: path
           required: true
           schema:
             type: integer
             format: int64
+            minimum: 0
+            maximum: 9223372036854776000
           example: 1001
       responses:
-        "204":
-          description: "Lea participant·e a été désactivé·e avec succès (suppression logique)."
-        "401":
+        '204':
+          description: Lea participant·e a été désactivé·e avec succès (suppression logique).
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
-          description: "Participant·e non trouvé·e"
+        '404':
+          description: Participant·e non trouvé·e
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 code: 404
-                message: "Participant·e non trouvé·e"
-        "406":
-          $ref: '#/components/responses/NotAcceptable'   
-        "429":
-          $ref: '#/components/responses/TooManyRequests'  
-        "500":
+                message: Participant·e non trouvé·e
+        '406':
+          $ref: '#/components/responses/NotAcceptable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
           $ref: '#/components/responses/InternalServerError'
-
-  /conversations/{conversationId}/messages:
+      x-stoplight:
+        id: jpfgmpceskkfm
+  '/conversations/{conversationId}/messages':
     get:
       tags:
         - message
-      summary: "Récupérer les messages d'une conversation."
-      security:
-        - BearerAuth: []
+      operationId: get-messages
+      summary: Récupère les messages d'une conversation
+      description: "Récupère les messages d'une conversation à partir de son identifiant."
       parameters:
         - name: conversationId
+          description: Identifiant de la conversation.
           in: path
           required: true
           schema:
             type: integer
             format: int64
+            minimum: 0
+            maximum: 9223372036854776000
           example: 4005
         - name: page
+          description: Numéro de la page (commence à 0).
           in: query
           schema:
             type: integer
+            format: int32
+            minimum: 0
+            maximum: 100
             default: 0
         - name: size
+          description: Nombre d'éléments par page (20 par défaut).
           in: query
           schema:
             type: integer
+            format: int32
+            minimum: 20
+            maximum: 100
             default: 20
       responses:
-        "200":
-          description: "La liste paginée des messages de la conversation."
+        '200':
+          description: La liste paginée des messages de la conversation.
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/MessagesResponse'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
-          description: "Conversation non trouvée"
+        '404':
+          description: Conversation non trouvée
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 code: 404
-                message: "Conversation non trouvée"
-        "406":
-          $ref: '#/components/responses/NotAcceptable'   
-        "429":
-          $ref: '#/components/responses/TooManyRequests'  
-        "500":
+                message: Conversation non trouvée
+        '406':
+          $ref: '#/components/responses/NotAcceptable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
           $ref: '#/components/responses/InternalServerError'
-
+      x-stoplight:
+        id: 6ax7gvmb5nsf3
     post:
       tags:
         - message
-      summary: "Ajouter un message à la conversation."
-      security:
-        - BearerAuth: []
+      operationId: create-message
+      summary: Ajoute un message à la conversation
+      description: "Ajoute un message à la conversation à partir de son identifiant."
       parameters:
         - name: conversationId
+          description: Identifiant de la conversation.
           in: path
           required: true
           schema:
             type: integer
             format: int64
+            minimum: 0
+            maximum: 9223372036854776000
           example: 4005
       requestBody:
         required: true
@@ -617,57 +640,64 @@ paths:
             schema:
               $ref: '#/components/schemas/MessageCreate'
       responses:
-        "201":
-          description: "Le message a été envoyé avec succès."
+        '201':
+          description: Le message a été envoyé avec succès.
           content:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/MessageResponse'
-        "400":
+        '400':
           $ref: '#/components/responses/BadRequest'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
-          description: "Conversation non trouvée"
+        '404':
+          description: Conversation non trouvée
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 code: 404
-                message: "Conversation non trouvée"
-        "406":
-          $ref: '#/components/responses/NotAcceptable'   
-        "415":
+                message: Conversation non trouvée
+        '406':
+          $ref: '#/components/responses/NotAcceptable'
+        '415':
           $ref: '#/components/responses/UnsupportedMediaType'
-        "429":
-          $ref: '#/components/responses/TooManyRequests'  
-        "500":
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
           $ref: '#/components/responses/InternalServerError'
-
-  /conversations/{conversationId}/messages/{messageId}:
+      x-stoplight:
+        id: plh5uuwku0srh
+  '/conversations/{conversationId}/messages/{messageId}':
     patch:
       tags:
         - message
-      summary: "Modifier le statut du message pour le participant spécifié (par défaut l'utilisateur·rice connecté)."
-      security:
-        - BearerAuth: []
+      operationId: update-message-status
+      summary: Modifie le statut du message pour un participant
+      description: "Modifie le statut du message pour le participant spécifié (par défaut l'utilisateur·rice connecté·e)."
       parameters:
         - name: conversationId
+          description: Identifiant de la conversation.
           in: path
           required: true
           schema:
             type: integer
             format: int64
+            minimum: 0
+            maximum: 9223372036854776000
           example: 4005
         - name: messageId
+          description: Identifiant du message.
           in: path
           required: true
           schema:
             type: integer
             format: int64
+            minimum: 0
+            maximum: 9223372036854776000
           example: 6001
       requestBody:
         required: false
@@ -676,8 +706,8 @@ paths:
             schema:
               $ref: '#/components/schemas/MessageStatusUpdate'
       responses:
-        "200":
-          description: "Le statut du message a été modifié avec succès."
+        '200':
+          description: Le statut du message a été modifié avec succès.
           content:
             application/hal+json:
               schema:
@@ -685,90 +715,97 @@ paths:
               example:
                 id: 6001
                 senderId: 1001
-                body: "J'aurai un peu de retard. Commencez sans moi"
-                sentAt: "2025-04-24T15:00:00Z"
-                participantStatus:
+                body: J'aurai un peu de retard. Commencez sans moi
+                sentAt: '2025-04-24T15:00:00Z'
+                status:
                   - userId: 1002
-                    readAt: "2025-04-24T15:03:00Z"
+                    readAt: '2025-04-24T15:03:00Z'
                     deleted: false
                   - userId: 1003
                     readAt: null
                     deleted: false
                 _links:
                   self:
-                    href: /conversations/4005/message/6001
-        "400":
+                    href: http://localhost:8080/conversations/4005/message/6001
+        '400':
           $ref: '#/components/responses/BadRequest'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
-          description: "Conversation ou message non trouvée"
+        '404':
+          description: Conversation ou message non trouvée
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 code: 404
-                message: "Conversation ou message non trouvée"
-        "406":
-          $ref: '#/components/responses/NotAcceptable'   
-        "415":
+                message: Conversation ou message non trouvée
+        '406':
+          $ref: '#/components/responses/NotAcceptable'
+        '415':
           $ref: '#/components/responses/UnsupportedMediaType'
-        "429":
-          $ref: '#/components/responses/TooManyRequests'  
-        "500":
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
           $ref: '#/components/responses/InternalServerError'
-
+      x-stoplight:
+        id: fpr6if9lb0ta0
     delete:
       tags:
         - message
-      summary: "Marquer un message comme étant supprimé (suppression logique)."
-      security:
-        - BearerAuth: []
+      operationId: delete-message
+      summary: Supprime un message.
+      description: "Marque un message comme étant supprimé (suppression logique)."
       parameters:
         - name: conversationId
+          description: Identifiant de la conversation.
           in: path
           required: true
           schema:
             type: integer
             format: int64
+            minimum: 0
+            maximum: 9223372036854776000
         - name: messageId
+          description: Identifiant du message.
           in: path
           required: true
           schema:
             type: integer
             format: int64
+            minimum: 0
+            maximum: 9223372036854776000
       responses:
-        "204":
-          description: "Le message a été marqué comme supprimé (suppression logique)."
-        "401":
+        '204':
+          description: Le message a été marqué comme supprimé (suppression logique).
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "404":
-          description: "Conversation ou message non trouvé"
+        '404':
+          description: Conversation ou message non trouvé
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               example:
                 code: 404
-                message: "Conversation ou message non trouvé"
-        "406":
-          $ref: '#/components/responses/NotAcceptable'   
-        "429":
-          $ref: '#/components/responses/TooManyRequests'  
-        "500":
+                message: Conversation ou message non trouvé
+        '406':
+          $ref: '#/components/responses/NotAcceptable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
           $ref: '#/components/responses/InternalServerError'
-
+      x-stoplight:
+        id: 6vvir3ajhcjy4
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
-
   schemas:
     ErrorResponse:
       type: object
@@ -777,28 +814,46 @@ components:
           type: integer
         message:
           type: string
+          maxLength: 255
+          pattern: '^.{1,255}$'
       additionalProperties: false
-
-    # Basic types
-    # These are used to define the basic types used in the API
-
+      x-stoplight:
+        id: r5iqrshm384zy
+    UuidType:
+      type: string
+      format: uuid
+      maxLength: 36
+      pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+      x-stoplight:
+        id: xtvcts3puwp8u
+    UriType:
+      type: string
+      format: uri
+      maxLength: 2048
+      pattern: '^https?:\/\/[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9._~:/?#\[\]@!$&''()*+,;=%-]*)?$'
+      x-stoplight:
+        id: 09sg13xg1mx0k
     EmailType:
       type: string
       format: email
-
+      maxLength: 254
+      pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+      x-stoplight:
+        id: 4jcqg6sqp8t0t
     PhoneNumberType:
-      description: "Numéro de téléphone au format E.164."
+      description: Numéro de téléphone au format E.164.
       type: string
-      pattern: ^\+?[1-9]\d{1,14}$
-
+      maxLength: 16
+      pattern: '^\+?[1-9]\d{1,14}$'
+      x-stoplight:
+        id: bxs9yc15fd9aa
     UserNameType:
       oneOf:
         - $ref: '#/components/schemas/EmailType'
         - $ref: '#/components/schemas/PhoneNumberType'
-
-    # Hal types
-    # These are used to represent the HAL links in the API responses
-
+      additionalProperties: true
+      x-stoplight:
+        id: 31lrq6katn5ih
     HalLinks:
       type: object
       properties:
@@ -806,9 +861,11 @@ components:
           type: object
           properties:
             href:
-              type: string
+              $ref: '#/components/schemas/UriType'
           additionalProperties: false
-
+      additionalProperties: true
+      x-stoplight:
+        id: ay1ieoj3l8myr
     HalCollectionLinks:
       type: object
       properties:
@@ -816,50 +873,58 @@ components:
           type: object
           properties:
             href:
-              type: string
+              $ref: '#/components/schemas/UriType'
+          additionalProperties: false
         first:
           type: object
           properties:
             href:
-              type: string
+              $ref: '#/components/schemas/UriType'
+          additionalProperties: false
         last:
           type: object
           properties:
             href:
-              type: string
+              $ref: '#/components/schemas/UriType'
+          additionalProperties: false
         next:
           type: object
           properties:
             href:
-              type: string
+              $ref: '#/components/schemas/UriType'
+          additionalProperties: false
         prev:
           type: object
           properties:
             href:
-              type: string
+              $ref: '#/components/schemas/UriType'
+          additionalProperties: false
       additionalProperties: false
-
+      x-stoplight:
+        id: t2rnucb40akxl
     PageMetadata:
       type: object
       properties:
         size:
           type: integer
+          format: int32
         totalElements:
           type: integer
+          format: int32
         totalPages:
           type: integer
+          format: int32
         number:
           type: integer
+          format: int32
       additionalProperties: false
       example:
         size: 20
         totalElements: 1
         totalPages: 1
         number: 0
-
-    # User types
-    # These are used to represent the users in the API
-
+      x-stoplight:
+        id: ye0lg2e3v7y4s
     UserCreate:
       type: object
       required:
@@ -870,8 +935,13 @@ components:
           $ref: '#/components/schemas/UserNameType'
         password:
           type: string
+          format: password
+          minLength: 8
+          maxLength: 128
+          pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$'
       additionalProperties: false
-      
+      x-stoplight:
+        id: 1sphm79naqskq
     UserUpdate:
       type: object
       properties:
@@ -879,8 +949,13 @@ components:
           $ref: '#/components/schemas/UserNameType'
         password:
           type: string
+          format: password
+          minLength: 8
+          maxLength: 128
+          pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$'
       additionalProperties: false
-
+      x-stoplight:
+        id: sdsmbkex0orfv
     UserResponse:
       type: object
       properties:
@@ -894,10 +969,12 @@ components:
       additionalProperties: false
       example:
         userId: 1001
-        username: "trillian@infinidim.com"
+        username: trillian@infinidim.com
         _links:
           self:
-            href: /users/1001
+            href: http://localhost:8080/users/1001
+      x-stoplight:
+        id: 82bk7nl1kikc0
     TokenRequest:
       type: object
       required:
@@ -908,29 +985,33 @@ components:
           $ref: '#/components/schemas/UserNameType'
         password:
           type: string
+          format: password
+          minLength: 8
+          maxLength: 128
+          pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$'
       additionalProperties: false
       example:
-        username: "trillian@infinidim.com"
-        password: "h2G2-42"
-
+        username: trillian@infinidim.com
+        password: h2G2-42*
+      x-stoplight:
+        id: a40fsyi002q8c
     TokenResponse:
       type: object
       properties:
         token:
-          type: string
+          $ref: '#/components/schemas/UuidType'
       additionalProperties: false
       example:
-        token: "eyJhbGciOiJSUzI1NiIsInR5..."
-
-    # Participant types
-    # These are used to represent the participants in a conversation
-
+        token: 550e8400-e29b-41d4-a716-446655440000
+      x-stoplight:
+        id: 1zl4arl98wy54
     ParticipantRoleType:
       type: string
       enum:
         - OWNER
         - MEMBER
-
+      x-stoplight:
+        id: 2is43jgjf0weo
     ParticipantStatusType:
       type: string
       enum:
@@ -938,7 +1019,8 @@ components:
         - INACTIVE
         - INVITED
         - BLOCKED
-
+      x-stoplight:
+        id: wz4g79w7nb0en
     ParticipantCreateFromUserId:
       type: object
       required:
@@ -947,6 +1029,8 @@ components:
         userId:
           type: integer
           format: int64
+          minimum: 0
+          maximum: 9223372036854776000
         role:
           $ref: '#/components/schemas/ParticipantRoleType'
         status:
@@ -956,7 +1040,8 @@ components:
         userId: 1001
         role: OWNER
         status: ACTIVE
-
+      x-stoplight:
+        id: zsfjjvwtgi703
     ParticipantCreateFromUsername:
       type: object
       required:
@@ -970,15 +1055,18 @@ components:
           $ref: '#/components/schemas/ParticipantStatusType'
       additionalProperties: false
       example:
-        username: "trillian@infinidim.ch"
+        username: trillian@infinidim.ch
         role: OWNER
         status: ACTIVE
-
+      x-stoplight:
+        id: ck1yst67dflmj
     ParticipantCreate:
       oneOf:
         - $ref: '#/components/schemas/ParticipantCreateFromUserId'
         - $ref: '#/components/schemas/ParticipantCreateFromUsername'
-
+      additionalProperties: true
+      x-stoplight:
+        id: f995nii86j3ve
     ParticipantUpdate:
       type: object
       properties:
@@ -990,7 +1078,8 @@ components:
       example:
         role: MEMBER
         status: ACTIVE
-
+      x-stoplight:
+        id: pstalokvkff45
     ParticipantResponse:
       type: object
       properties:
@@ -1008,13 +1097,14 @@ components:
       additionalProperties: false
       example:
         userId: 1001
-        username: "trillian@infinidim.ch"
+        username: trillian@infinidim.ch
         role: OWNER
         status: ACTIVE
         _links:
           self:
-            href: /conversations/4005/participants/1001
-
+            href: http://localhost:8080/conversations/4005/participants/1001
+      x-stoplight:
+        id: mcedz7m5zh17w
     ParticipantsResponse:
       type: object
       properties:
@@ -1023,6 +1113,7 @@ components:
           properties:
             participants:
               type: array
+              maxItems: 15
               items:
                 $ref: '#/components/schemas/ParticipantResponse'
           additionalProperties: false
@@ -1033,49 +1124,47 @@ components:
         _embedded:
           participants:
             - userId: 1001
-              username: "trillian@infinidim.ch"
+              username: trillian@infinidim.ch
               role: MEMBER
               status: ACTIVE
               _links:
                 self:
-                  href: /conversations/4005/participants/1001
+                  href: http://localhost:8080/conversations/4005/participants/1001
             - userId: 1002
               username: "+41799991234"
               role: MEMBER
               status: ACTIVE
               _links:
                 self:
-                  href: /conversations/4005/participants/1002
+                  href: http://localhost:8080/conversations/4005/participants/1002
         _links:
           self:
-            href: /conversations/4005/participants
-
-    # Conversation types
-    # These are used to represent the conversations in the API
-
-    ConversationCreateSingle:
-      type: object
-      oneOf:
-        - type: object
-          required:
-            - userId
-          properties:
-            userId:
-              type: integer
-              format: int64
-          additionalProperties: false
-          example:
-            userId: 1002
-        - type: object
-          required:
-            - username
-          properties:
-            username:
-              $ref: '#/components/schemas/UserNameType'
-          additionalProperties: false
-          example:
-            username: "trillian@infinidim.ch"
-
+            href: http://localhost:8080/conversations/4005/participants
+      x-stoplight:
+        id: d7lhw9dbjwqgy
+    ConversationCreateFromSingleUserId:
+        type: object
+        required:
+          - userId
+        properties:
+          userId:
+            type: integer
+            format: int64
+            minimum: 0
+            maximum: 9223372036854776000
+        additionalProperties: false
+        example:
+          userId: 1002
+    ConversationCreateFromSingleUsername:
+        type: object
+        required:
+          - username
+        properties:
+          username:
+            $ref: '#/components/schemas/UserNameType'
+        additionalProperties: false
+        example:
+          username: trillian@infinidim.ch
     ConversationCreateMultiple:
       type: object
       properties:
@@ -1091,13 +1180,15 @@ components:
           - userId: 14
             role: MEMBER
             status: ACTIVE
-          - username: "siona@example.com"
-
+          - username: siona@example.com
     ConversationCreate:
       oneOf:
-        - $ref: '#/components/schemas/ConversationCreateSingle'
+        - $ref: '#/components/schemas/ConversationCreateFromSingleUserId'
+        - $ref: '#/components/schemas/ConversationCreateFromSingleUsername'
         - $ref: '#/components/schemas/ConversationCreateMultiple'
-
+      additionalProperties: true
+      x-stoplight:
+        id: x41sbgtrt8gza
     ConversationResponse:
       allOf:
         - type: object
@@ -1117,24 +1208,25 @@ components:
                       type: object
                       properties:
                         href:
-                          type: string
-                  additionalProperties: false
-          additionalProperties: false
+                          $ref: '#/components/schemas/UriType'
+                  additionalProperties: true
+              additionalProperties: true
         - $ref: '#/components/schemas/ParticipantsResponse'
+      additionalProperties: true
       example:
         id: 4005
         isGroup: false
         _embedded:
           participants:
             - userId: 1001
-              username: "trillian@infinidim.ch"
+              username: trillian@infinidim.ch
               role: MEMBER
               status: ACTIVE
               _links:
                 self:
                   href: /conversations/4005/participants/1001
             - userId: 1002
-              username: "+41799991234"
+              username: 41799991234
               role: MEMBER
               status: ACTIVE
               _links:
@@ -1147,7 +1239,8 @@ components:
             href: /conversations/4005/messages
           participants:
             href: /conversations/4005/participants
-
+      x-stoplight:
+        id: ytj30alqci3lm
     ConversationsResponse:
       type: object
       properties:
@@ -1156,6 +1249,7 @@ components:
           properties:
             conversations:
               type: array
+              maxItems: 100
               items:
                 type: object
                 properties:
@@ -1166,7 +1260,11 @@ components:
                     type: object
                     properties:
                       participants:
-                        $ref: '#/components/schemas/ParticipantResponse'
+                        type: array
+                        maxItems: 100
+                        items:
+                          $ref: '#/components/schemas/ParticipantResponse'
+                    additionalProperties: false
                   _links:
                     allOf:
                       - $ref: '#/components/schemas/HalLinks'
@@ -1176,8 +1274,10 @@ components:
                             type: object
                             properties:
                               href:
-                                type: string
-                additionalProperties: false
+                                $ref: '#/components/schemas/UriType'
+                        additionalProperties: true
+                    additionalProperties: true
+                additionalProperties: true
         page:
           $ref: '#/components/schemas/PageMetadata'
         _links:
@@ -1190,25 +1290,25 @@ components:
               isGroup: false
               _links:
                 self:
-                  href: /conversations/4005
+                  href: http://localhost:8080/conversations/4005
                 messages:
-                  href: /conversations/4005/messages
+                  href: http://localhost:8080/conversations/4005/messages
               _embedded:
                 participants:
                   - userId: 1001
-                    username: "trillian@infinidim.ch"
+                    username: trillian@infinidim.ch
                     role: MEMBER
                     status: ACTIVE
                     _links:
                       self:
-                        href: /conversations/4005/participants/1001
+                        href: http://localhost:8080/conversations/4005/participants/1001
                   - userId: 1002
                     username: "+41799991234"
                     role: MEMBER
                     status: ACTIVE
                     _links:
                       self:
-                        href: /conversations/4005/participants/1002
+                        href: http://localhost:8080/conversations/4005/participants/1002
         page:
           size: 20
           totalElements: 1
@@ -1216,17 +1316,15 @@ components:
           number: 0
         _links:
           self:
-            href: /conversations
+            href: http://localhost:8080/conversations
           first:
-            href: /conversations?page=0
+            href: http://localhost:8080/conversations?page=0
           next:
-            href: /conversations?page=1
+            href: http://localhost:8080/conversations?page=1
           last:
-            href: /conversations?page=10
-
-    # Message types
-    # These are used to represent the messages in the API
-
+            href: http://localhost:8080/conversations?page=10
+      x-stoplight:
+        id: 76npegstj7pec
     MessageCreate:
       type: object
       required:
@@ -1234,10 +1332,13 @@ components:
       properties:
         body:
           type: string
+          maxLength: 2000
+          pattern: '^.{1,2000}$'
       additionalProperties: false
       example:
-        body: "J'aurai un peu de retard. Commencez sans moi."
-
+        body: J'aurai un peu de retard. Commencez sans moi.
+      x-stoplight:
+        id: rmm6g1vtdw2og
     MessageResponse:
       type: object
       properties:
@@ -1249,11 +1350,13 @@ components:
           format: int64
         body:
           type: string
+          maxLength: 2000
         sentAt:
           type: string
           format: date-time
         status:
           type: array
+          maxItems: 15
           items:
             type: object
             properties:
@@ -1262,18 +1365,20 @@ components:
                 format: int64
               readAt:
                 type: string
+                nullable: true
                 format: date-time
               deleted:
                 type: boolean
+            additionalProperties: false
         _links:
           $ref: '#/components/schemas/HalLinks'
       additionalProperties: false
       example:
         id: 6001
         senderId: 1001
-        body: "J'aurai un peu de retard. Commencez sans moi"
-        sentAt: "2025-04-24T15:00:00Z"
-        participantStatus:
+        body: J'aurai un peu de retard. Commencez sans moi
+        sentAt: '2025-04-24T15:00:00Z'
+        status:
           - userId: 1002
             readAt: null
             deleted: false
@@ -1282,8 +1387,9 @@ components:
             deleted: false
         _links:
           self:
-            href: /conversations/4005/message/6001
-
+            href: http://localhost:8080/conversations/4005/message/6001
+      x-stoplight:
+        id: o6x2vqqc3d3fh
     MessagesResponse:
       type: object
       properties:
@@ -1294,6 +1400,7 @@ components:
           properties:
             messages:
               type: array
+              maxItems: 100
               items:
                 $ref: '#/components/schemas/MessageResponse'
           additionalProperties: false
@@ -1305,137 +1412,106 @@ components:
           messages:
             - id: 6001
               senderId: 1001
-              body: "J'aurai un peu de retard. Commencez sans moi"
-              sentAt: "2025-04-24T15:00:00Z"
-              participantStatus:
+              body: J'aurai un peu de retard. Commencez sans moi
+              sentAt: '2025-04-24T15:00:00Z'
+              status:
                 - userId: 1002
-                  readAt: "2025-04-24T15:01:00Z"
+                  readAt: '2025-04-24T15:01:00Z'
                   deleted: false
                 - userId: 1003
                   readAt: null
                   deleted: false
               _links:
                 self:
-                  href: /conversations/4005/messages/6001
+                  href: http://localhost:8080/conversations/4005/messages/6001
         _links:
-          self: /conversations/4005/messages
+          self: 
+            href: http://localhost:8080/conversations/4005/messages
         page:
           size: 20
           totalElements: 1
           totalPages: 1
           number: 0
-
+      x-stoplight:
+        id: d7gmi1z52s7my
     MessageStatusUpdate:
       type: object
       properties:
         userId:
           type: integer
           format: int64
+          minimum: 0
+          maximum: 9223372036854776000
         readAt:
           type: string
           format: date-time
       additionalProperties: false
       example:
         userId: 1002
-        readAt: "2025-04-24T15:03:00Z"
-
-    MessageStatusResponse:
-      type: object
-      properties:
-        _links:
-          $ref: '#/components/schemas/HalLinks'
-        _embedded:
-          type: object
-          properties:
-            message:
-              $ref: '#/components/schemas/MessageResponse'
-      additionalProperties: false
-      example:
-        _links:
-          self:
-            href: /conversations/4005/messages/6001/status
-        _embedded:
-          message:
-            id: 6001
-            senderId: 1001
-            body: "J'aurai un peu de retard. Commencez sans moi"
-            sentAt: "2025-04-24T15:00:00Z"
-            participantStatus:
-              - userId: 1002
-                readAt: "2025-04-24T15:01:00Z"
-                deleted: false
-              - userId: 1003
-                readAt: null
-                deleted: false
-
+        readAt: '2025-04-24T15:03:00Z'
+      x-stoplight:
+        id: hzc0l4yf0kt0r
   responses:
     BadRequest:
-      description: "Requête invalide"
+      description: Requête invalide
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           example:
             code: 400
-            message: "Requête invalide"
-
+            message: Requête invalide
     Unauthorized:
-      description: "Non autorisé"
+      description: Non autorisé
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           example:
             code: 401
-            message: "Identifiants de connexion non valides."
-    
+            message: Identifiants de connexion non valides.
     Forbidden:
-      description: "Accès refusé"
+      description: Accès refusé
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           example:
             code: 403
-            message: "Accès refusé"
-
+            message: Accès refusé
     NotAcceptable:
-      description: "Not Acceptable"
+      description: Not Acceptable
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           example:
             code: 406
-            message: "Not Acceptable"
-
+            message: Not Acceptable
     UnsupportedMediaType:
-      description: "Unsupported Media Type"
+      description: Unsupported Media Type
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           example:
             code: 415
-            message: "Unsupported Media Type"
-
+            message: Unsupported Media Type
     TooManyRequests:
-      description: "Too Many Requests"
+      description: Too Many Requests
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           example:
             code: 429
-            message: "Too Many Requests"
-
+            message: Too Many Requests
     InternalServerError:
-      description: "Erreur interne du serveur"
+      description: Erreur interne du serveur
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
           example:
             code: 500
-            message: "Erreur interne du serveur"
-
+            message: Erreur interne du serveur
