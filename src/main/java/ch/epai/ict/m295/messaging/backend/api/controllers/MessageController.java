@@ -23,7 +23,6 @@ import ch.epai.ict.m295.messaging.backend.api.dto.MessageStatusDto;
 import ch.epai.ict.m295.messaging.backend.domain.ConversationRepository;
 import ch.epai.ict.m295.messaging.backend.domain.Message;
 import ch.epai.ict.m295.messaging.backend.domain.MessageBuilder;
-import ch.epai.ict.m295.messaging.backend.domain.MessageRepository;
 import ch.epai.ict.m295.messaging.backend.domain.MessageStatus;
 import ch.epai.ict.m295.messaging.backend.domain.User;
 
@@ -31,16 +30,14 @@ import ch.epai.ict.m295.messaging.backend.domain.User;
 public class MessageController {
 
     private final ConversationRepository conversationRepository;
-    private final MessageRepository messageRepository;
 
-    public MessageController(ConversationRepository conversationRepository, MessageRepository messageRepository) {
+    public MessageController(ConversationRepository conversationRepository) {
         this.conversationRepository = conversationRepository;
-        this.messageRepository = messageRepository;
     }
 
     @GetMapping("/conversations/{conversationId}/messages")
     public CollectionModel<MessageResponseDto> getMessages(@PathVariable long conversationId, @RequestAttribute User principal) {
-        List<Message> messages = messageRepository.getMessages(conversationId);
+        List<Message> messages = conversationRepository.getMessages(conversationId);
         return CollectionModel.of(
                 messages.stream()
                     .map(conversation -> toMessageResponse(conversation))
@@ -56,7 +53,7 @@ public class MessageController {
             .setSenderId(principal.getId())
             .setBody(createMessageDto.body())
             .build();
-        messageRepository.createMessage(message);
+        conversationRepository.createMessage(message);
         return toMessageResponse(message);
     }
 

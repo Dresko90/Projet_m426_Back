@@ -30,6 +30,15 @@ public class Conversation {
         return false;
     }
 
+    public boolean isOwner(User user) {
+        for (Participant participant : participants) {
+            if (participant.getUserId() == user.getId() && participant.getRole() == Participant.Role.OWNER) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public Participant getParticipant(long userId) {
         for (Participant participant : participants) {
             if (participant.getUserId() == userId) {

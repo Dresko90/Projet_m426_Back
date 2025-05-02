@@ -2,13 +2,17 @@ package ch.epai.ict.m295.messaging.backend.data;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
@@ -17,6 +21,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 import ch.epai.ict.m295.messaging.backend.domain.Conversation;
 import ch.epai.ict.m295.messaging.backend.domain.ConversationBuilder;
 import ch.epai.ict.m295.messaging.backend.domain.ConversationRepository;
+import ch.epai.ict.m295.messaging.backend.domain.Message;
+import ch.epai.ict.m295.messaging.backend.domain.MessageBuilder;
+import ch.epai.ict.m295.messaging.backend.domain.MessageStatus;
+import ch.epai.ict.m295.messaging.backend.domain.MessageStatusBuilder;
 import ch.epai.ict.m295.messaging.backend.domain.Participant;
 import ch.epai.ict.m295.messaging.backend.domain.ParticipantBuilder;
 import ch.epai.ict.m295.messaging.backend.domain.User;
@@ -46,6 +54,18 @@ public class SqlConversationRepository implements ConversationRepository {
         }
     }
 
+    public class MessageStatusRowMapper implements RowMapper<MessageStatus> {
+        @Override
+        @Nullable
+        public MessageStatus mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
+            return MessageStatusBuilder.create()
+                .setUserId(rs.getLong("user_id"))
+                .setReadAt(rs.getTimestamp("read_at") != null ? rs.getTimestamp("read_at").toLocalDateTime() : null)
+                .setDeleted(rs.getBoolean("deleted"))
+                .build();
+        }
+    }   
+
     private class CreateConversationTransaction implements TransactionCallback<Object> {
         private final Conversation conversation;
 
@@ -57,7 +77,10 @@ public class SqlConversationRepository implements ConversationRepository {
         public Object doInTransaction(@NonNull TransactionStatus status) {
             try {
                 jdbcTemplate.update(
-                    "INSERT INTO conversation (conversation_id) VALUES (:conversationId)",
+                    """
+                    INSERT INTO conversation (conversation_id) 
+                    VALUES (:conversationId)
+                    """,
                     new MapSqlParameterSource("conversationId", conversation.getId())
                 );
 
@@ -71,6 +94,61 @@ public class SqlConversationRepository implements ConversationRepository {
             return null;
         }
     }
+
+    private class MessageRowMapper implements RowMapper<Message> {
+        @Override
+        @Nullable
+        public Message mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
+            return MessageBuilder.create()
+                .setId(rs.getLong("message_id"))
+                .setConversationId(rs.getLong("conversation_id"))
+                .setSenderId(rs.getLong("sender_id"))
+                .setBody(rs.getString("body"))
+                .setSentDateTime(rs.getTimestamp("send_at").toLocalDateTime())
+                .setMessageStatus(getMessageStatus(rs.getLong("message_id")))
+                .build();
+        }
+    }
+
+    private class CreateMessageTransaction implements TransactionCallback<Object> {
+        private final Message message;
+
+        public CreateMessageTransaction(Message message) {
+            this.message = message;
+        }
+
+        @Override
+        public Object doInTransaction(@NonNull TransactionStatus status) {
+            try {
+                jdbcTemplate.update(
+                    "INSERT INTO message (message_id, conversation_id, sender_id, body) " +
+                    "VALUES (:messageId, :conversationId, :senderId, :content)",
+                    new MapSqlParameterSource()
+                        .addValue("messageId", message.getId())
+                        .addValue("conversationId", message.getConversationId())
+                        .addValue("senderId", message.getSenderId())
+                        .addValue("content", message.getBody())
+                );
+        
+                for(MessageStatus messageStatus: message.getMessageStatus()) {
+                    jdbcTemplate.update(
+                        "INSERT INTO message_status (message_id, user_id, read_at, deleted) " +
+                        "VALUES (:messageId, :userId, :readAt, :deleted)",
+                        new MapSqlParameterSource()
+                            .addValue("messageId", message.getId())
+                            .addValue("userId", messageStatus.getUserId())
+                            .addValue("readAt", messageStatus.getReadAt())
+                            .addValue("deleted", messageStatus.isDeleted())
+                    );
+                }
+            } catch (Exception e) {
+                status.setRollbackOnly();
+                throw e;
+            }
+            return null;
+        }
+    }
+
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final PlatformTransactionManager transactionManager;
@@ -89,20 +167,29 @@ public class SqlConversationRepository implements ConversationRepository {
 
     @Override
     public Conversation getConversation(long conversationId) {
-        return jdbcTemplate.queryForObject(
-            "SELECT * FROM conversation WHERE conversation_id = :conversationId",
-            new MapSqlParameterSource("conversationId", conversationId),
-            new ConversationRowMapper()
-        );
+        try {
+            return jdbcTemplate.queryForObject(
+                """
+                SELECT * 
+                FROM conversation 
+                WHERE conversation_id = :conversationId
+                """,
+                new MapSqlParameterSource("conversationId", conversationId),
+                new ConversationRowMapper());
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 
     @Override
     public List<Conversation> findConversationsByUser(User user) {
         return jdbcTemplate.query(
-            "SELECT DISTINCT c.* " +
-            "FROM conversation c " +
-            "INNER JOIN participant p ON c.conversation_id = p.conversation_id " +
-            "WHERE p.user_id = :userId",
+            """
+            SELECT DISTINCT c.*
+            FROM conversation c
+            INNER JOIN participant p ON c.conversation_id = p.conversation_id
+            WHERE p.user_id = :userId
+            """,
             new MapSqlParameterSource("userId", user.getId()),
             new ConversationRowMapper()
         );
@@ -130,7 +217,10 @@ public class SqlConversationRepository implements ConversationRepository {
     @Override
     public void updateConversation(Conversation conversation) {
         jdbcTemplate.update(
-            "DELETE FROM participant WHERE conversation_id = :conversationId",
+            """
+            DELETE FROM participant 
+            WHERE conversation_id = :conversationId
+            """,
             new MapSqlParameterSource("conversationId", conversation.getId())
         );
 
@@ -142,8 +232,28 @@ public class SqlConversationRepository implements ConversationRepository {
     @Override
     public void addParticipant(long conversationId, Participant participant) {
         jdbcTemplate.update(
-            "INSERT INTO participant (conversation_id, user_id, participant_role, participant_status) " +
-            "VALUES (:conversationId, :userId, :role, :status)",
+            """
+            INSERT INTO participant 
+                (conversation_id, user_id, participant_role, participant_status)
+            VALUES 
+                (:conversationId, :userId, :role, :status)
+            """,
+            new MapSqlParameterSource()
+                .addValue("conversationId", conversationId)
+                .addValue("userId", participant.getUserId())
+                .addValue("role", participant.getRole().name())
+                .addValue("status", participant.getStatus().name())
+        );
+    }
+
+    @Override
+    public void updateParticipant(long conversationId, Participant participant) {
+        jdbcTemplate.update(
+            """
+            UPDATE participant 
+            SET participant_role = :role, participant_status = :status
+            WHERE conversation_id = :conversationId AND user_id = :userId
+            """,
             new MapSqlParameterSource()
                 .addValue("conversationId", conversationId)
                 .addValue("userId", participant.getUserId())
@@ -155,7 +265,10 @@ public class SqlConversationRepository implements ConversationRepository {
     @Override
     public void removeParticipant(long conversationId, long userId) {
         jdbcTemplate.update(
-            "DELETE FROM participant WHERE conversation_id = :conversationId AND user_id = :userId",
+            """
+            DELETE FROM participant 
+            WHERE conversation_id = :conversationId AND user_id = :userId
+            """,
             new MapSqlParameterSource()
                 .addValue("conversationId", conversationId)
                 .addValue("userId", userId)
@@ -165,19 +278,82 @@ public class SqlConversationRepository implements ConversationRepository {
     @Override
     public void deleteConversation(long conversationId) {
         jdbcTemplate.update(
-            "DELETE FROM conversation WHERE conversation_id = :conversationId",
+            """
+            DELETE FROM conversation 
+            WHERE conversation_id = :conversationId
+            """,
             new MapSqlParameterSource("conversationId", conversationId)
+        );
+    }
+
+    @Override
+    public void createMessage(Message message) {
+        TransactionTemplate transactionTemplate = new TransactionTemplate(this.transactionManager);
+        CreateMessageTransaction transaction = new CreateMessageTransaction(message);
+        transactionTemplate.execute(transaction);
+    }
+
+    @Override
+    public List<Message> getMessages(long conversationId) {
+        return jdbcTemplate.query(
+            """
+            SELECT * 
+            FROM message 
+            WHERE conversation_id = :conversationId 
+            ORDER BY send_at ASC
+            """,
+            new MapSqlParameterSource("conversationId", conversationId),
+            new MessageRowMapper()
+        );
+    }
+
+    @Override
+    public void updateMessageReadAtForUser(long messageId, long userId, LocalDateTime readAt) {
+        jdbcTemplate.update(
+            """
+            UPDATE message_status 
+            SET read_at = :readAt 
+            WHERE message_id = :messageId AND user_id = :userId;
+            """,
+            new MapSqlParameterSource()
+                .addValue("messageId", messageId)
+                .addValue("userId", userId)
+                .addValue("readAt", Timestamp.valueOf(readAt))
+        );
+    }
+
+    @Override
+    public void deleteMessageForUser(long messageId, long userId) {
+        jdbcTemplate.update(
+            """
+            UPDATE message_status 
+            SET deleted = TRUE 
+            WHERE message_id = :messageId AND user_id = :userId
+            """,
+            new MapSqlParameterSource()
+                .addValue("messageId", messageId)
+                .addValue("userId", userId)
         );
     }
 
     private List<Participant> getParticipants(long conversationId) {
         return jdbcTemplate.query(
-            "SELECT p.user_id, u.username, p.participant_role, p.participant_status " +
-            "FROM participant p " +
-            "INNER JOIN user u ON p.user_id = u.user_id " +
-            "WHERE p.conversation_id = :conversationId",
+            """
+            SELECT p.user_id, u.username, p.participant_role, p.participant_status
+            FROM participant p
+            INNER JOIN user u ON p.user_id = u.user_id
+            WHERE p.conversation_id = :conversationId
+            """,
             new MapSqlParameterSource("conversationId", conversationId),
             new ParticipantRowMapper()
         );
     }
+
+    private List<MessageStatus> getMessageStatus(long messageId) {
+        return jdbcTemplate.query(
+            "SELECT * FROM message_status WHERE message_id = :messageId",
+            new MapSqlParameterSource("messageId", messageId),
+            new MessageStatusRowMapper()
+        );
+    } 
 }
