@@ -1,6 +1,4 @@
 openapi: 3.0.4
-x-stoplight:
-  id: b2ftpffer1wyu
 info:
   title: Instant Messaging API
   description: |
@@ -65,8 +63,6 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         default:
           $ref: '#/components/responses/InternalServerError'
-      x-stoplight:
-        id: y6lc9ujtruw01
   /tokens/me:
     delete:
       tags:
@@ -88,8 +84,6 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         default:
           $ref: '#/components/responses/InternalServerError'
-      x-stoplight:
-        id: ovlh9crcrldsw
   /users:
     post:
       tags:
@@ -136,8 +130,6 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         default:
           $ref: '#/components/responses/InternalServerError'
-      x-stoplight:
-        id: wjt0msnjwkgr0
   '/users/{userId}':
     get:
       tags:
@@ -182,8 +174,6 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         default:
           $ref: '#/components/responses/InternalServerError'
-      x-stoplight:
-        id: fpjilr4xetwgy
     patch:
       tags:
         - user
@@ -244,8 +234,45 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         default:
           $ref: '#/components/responses/InternalServerError'
-      x-stoplight:
-        id: 0geswrhml88nz
+    delete:
+      tags:
+        - user
+      operationId: delete-user
+      summary: Supprime un·e utilisateur·rice.
+      description: "Supprime un·e utilisateur·rice à partir de son identifiant. Cette opération est irréversible et entraîne l’anonymisation de tous les messages envoyés par cette personne." 
+      parameters:
+        - name: userId
+          description: Identifiant de l'utilisateur
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 0
+            maximum: 9223372036854776000
+          example: 1001
+      responses:
+        '204':
+          description: L'utilisateur·rice a été supprimé·e avec succès (suppression logique).
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Utilisateur·rice non trouvé·e
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                code: 404
+                message: Utilisateur non trouvé
+        '406':
+          $ref: '#/components/responses/NotAcceptable'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        default:
+          $ref: '#/components/responses/InternalServerError'
   /conversations:
     get:
       tags:
@@ -289,8 +316,6 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         default:
           $ref: '#/components/responses/InternalServerError'
-      x-stoplight:
-        id: k02ba1i1nu0aw
     post:
       tags:
         - conversation
@@ -341,8 +366,6 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         default:
           $ref: '#/components/responses/InternalServerError'
-      x-stoplight:
-        id: jxoqojvljt2st
   '/conversations/{conversationId}':
     get:
       tags:
@@ -387,8 +410,6 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         default:
           $ref: '#/components/responses/InternalServerError'
-      x-stoplight:
-        id: bm8lkososxr45
   '/conversations/{conversationId}/participants':
     get:
       tags:
@@ -433,15 +454,18 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         default:
           $ref: '#/components/responses/InternalServerError'
-      x-stoplight:
-        id: jkske4smpnaf6
   '/conversations/{conversationId}/participants/{participantId}':
     patch:
       tags:
         - participant
       operationId: update-participant
       summary: Modifie le rôle ou le statut d'un·e participant·e.
-      description: "Modifie le rôle ou le statut d'un·e participant·e à partir de son identifiant."
+      description: >
+        Modifie le rôle ou le statut d'un·e participant·e à partir de son identifiant.
+
+        * Si la conversation est une conversation de groupe, le ou la propriétaire de la conversation peut bloquer un·e participant·e non propriétaire ou lui attribuer le rôle de propriétaire.
+        
+        * Si la conversation est une conversation privée, un·e participant·e peut changer son propre status d'actif à inactif. Cette opération est irréversible et entraîne la suppression logique de tous les messages de la conversation pour cette personne.
       security:
         - BearerAuth: []
       parameters:
@@ -499,59 +523,6 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         default:
           $ref: '#/components/responses/InternalServerError'
-      x-stoplight:
-        id: koi6l7owbkshz
-    delete:
-      tags:
-        - participant
-      operationId: deactivate-participant
-      summary: Désactive un·e participant·e
-      description: "Désactive un·e participant·e à partir de son identifiant (suppression logique)."
-      parameters:
-        - name: conversationId
-          description: Identifiant de la conversation.
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-            minimum: 0
-            maximum: 9223372036854776000
-          example: 4005
-        - name: participantId
-          description: Identifiant du participant.
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-            minimum: 0
-            maximum: 9223372036854776000
-          example: 1001
-      responses:
-        '204':
-          description: Lea participant·e a été désactivé·e avec succès (suppression logique).
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          description: Participant·e non trouvé·e
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                code: 404
-                message: Participant·e non trouvé·e
-        '406':
-          $ref: '#/components/responses/NotAcceptable'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        default:
-          $ref: '#/components/responses/InternalServerError'
-      x-stoplight:
-        id: jpfgmpceskkfm
   '/conversations/{conversationId}/messages':
     get:
       tags:
@@ -614,8 +585,6 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         default:
           $ref: '#/components/responses/InternalServerError'
-      x-stoplight:
-        id: 6ax7gvmb5nsf3
     post:
       tags:
         - message
@@ -669,15 +638,18 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         default:
           $ref: '#/components/responses/InternalServerError'
-      x-stoplight:
-        id: plh5uuwku0srh
   '/conversations/{conversationId}/messages/{messageId}':
     patch:
       tags:
         - message
       operationId: update-message-status
       summary: Modifie le statut du message pour un participant
-      description: "Modifie le statut du message pour le participant spécifié (par défaut l'utilisateur·rice connecté·e)."
+      description: >
+        Modifie le statut d’un message pour l’utilisateur·rice connecté·e.
+
+        * Si le message est lu, le champ `readAt` est mis à jour avec la date et l’heure de lecture.
+
+        * Si le message doit être supprimé pour l'utilisateur·rice, le champ `deleted` est mis à `true`. Cette opération est irréversible et entraîne la suppression logique du message pour cette personne uniquement.
       parameters:
         - name: conversationId
           description: Identifiant de la conversation.
@@ -750,57 +722,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         default:
           $ref: '#/components/responses/InternalServerError'
-      x-stoplight:
-        id: fpr6if9lb0ta0
-    delete:
-      tags:
-        - message
-      operationId: delete-message
-      summary: Supprime un message.
-      description: "Marque un message comme étant supprimé (suppression logique)."
-      parameters:
-        - name: conversationId
-          description: Identifiant de la conversation.
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-            minimum: 0
-            maximum: 9223372036854776000
-        - name: messageId
-          description: Identifiant du message.
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-            minimum: 0
-            maximum: 9223372036854776000
-      responses:
-        '204':
-          description: Le message a été marqué comme supprimé (suppression logique).
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          description: Conversation ou message non trouvé
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                code: 404
-                message: Conversation ou message non trouvé
-        '406':
-          $ref: '#/components/responses/NotAcceptable'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        default:
-          $ref: '#/components/responses/InternalServerError'
-      x-stoplight:
-        id: 6vvir3ajhcjy4
+    
 components:
   securitySchemes:
     BearerAuth:
@@ -817,43 +739,31 @@ components:
           maxLength: 255
           pattern: '^.{1,255}$'
       additionalProperties: false
-      x-stoplight:
-        id: r5iqrshm384zy
     UuidType:
       type: string
       format: uuid
       maxLength: 36
       pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
-      x-stoplight:
-        id: xtvcts3puwp8u
     UriType:
       type: string
       format: uri
       maxLength: 2048
       pattern: '^https?:\/\/[a-zA-Z0-9.-]+(:[0-9]+)?(\/[a-zA-Z0-9._~:/?#\[\]@!$&''()*+,;=%-]*)?$'
-      x-stoplight:
-        id: 09sg13xg1mx0k
     EmailType:
       type: string
       format: email
       maxLength: 254
       pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-      x-stoplight:
-        id: 4jcqg6sqp8t0t
     PhoneNumberType:
       description: Numéro de téléphone au format E.164.
       type: string
       maxLength: 16
       pattern: '^\+?[1-9]\d{1,14}$'
-      x-stoplight:
-        id: bxs9yc15fd9aa
     UserNameType:
       oneOf:
         - $ref: '#/components/schemas/EmailType'
         - $ref: '#/components/schemas/PhoneNumberType'
       additionalProperties: true
-      x-stoplight:
-        id: 31lrq6katn5ih
     HalLinks:
       type: object
       properties:
@@ -864,8 +774,6 @@ components:
               $ref: '#/components/schemas/UriType'
           additionalProperties: false
       additionalProperties: true
-      x-stoplight:
-        id: ay1ieoj3l8myr
     HalCollectionLinks:
       type: object
       properties:
@@ -900,8 +808,6 @@ components:
               $ref: '#/components/schemas/UriType'
           additionalProperties: false
       additionalProperties: false
-      x-stoplight:
-        id: t2rnucb40akxl
     PageMetadata:
       type: object
       properties:
@@ -923,8 +829,6 @@ components:
         totalElements: 1
         totalPages: 1
         number: 0
-      x-stoplight:
-        id: ye0lg2e3v7y4s
     UserCreate:
       type: object
       required:
@@ -940,8 +844,6 @@ components:
           maxLength: 128
           pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$'
       additionalProperties: false
-      x-stoplight:
-        id: 1sphm79naqskq
     UserUpdate:
       type: object
       properties:
@@ -954,8 +856,6 @@ components:
           maxLength: 128
           pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$'
       additionalProperties: false
-      x-stoplight:
-        id: sdsmbkex0orfv
     UserResponse:
       type: object
       properties:
@@ -973,8 +873,6 @@ components:
         _links:
           self:
             href: http://localhost:8080/users/1001
-      x-stoplight:
-        id: 82bk7nl1kikc0
     TokenRequest:
       type: object
       required:
@@ -993,8 +891,6 @@ components:
       example:
         username: trillian@infinidim.com
         password: h2G2-42*
-      x-stoplight:
-        id: a40fsyi002q8c
     TokenResponse:
       type: object
       properties:
@@ -1003,24 +899,17 @@ components:
       additionalProperties: false
       example:
         token: 550e8400-e29b-41d4-a716-446655440000
-      x-stoplight:
-        id: 1zl4arl98wy54
     ParticipantRoleType:
       type: string
       enum:
-        - OWNER
         - MEMBER
-      x-stoplight:
-        id: 2is43jgjf0weo
+        - OWNER
     ParticipantStatusType:
       type: string
       enum:
         - ACTIVE
         - INACTIVE
-        - INVITED
         - BLOCKED
-      x-stoplight:
-        id: wz4g79w7nb0en
     ParticipantCreateFromUserId:
       type: object
       required:
@@ -1040,8 +929,6 @@ components:
         userId: 1001
         role: OWNER
         status: ACTIVE
-      x-stoplight:
-        id: zsfjjvwtgi703
     ParticipantCreateFromUsername:
       type: object
       required:
@@ -1058,15 +945,11 @@ components:
         username: trillian@infinidim.ch
         role: OWNER
         status: ACTIVE
-      x-stoplight:
-        id: ck1yst67dflmj
     ParticipantCreate:
       oneOf:
         - $ref: '#/components/schemas/ParticipantCreateFromUserId'
         - $ref: '#/components/schemas/ParticipantCreateFromUsername'
       additionalProperties: true
-      x-stoplight:
-        id: f995nii86j3ve
     ParticipantUpdate:
       type: object
       properties:
@@ -1078,8 +961,6 @@ components:
       example:
         role: MEMBER
         status: ACTIVE
-      x-stoplight:
-        id: pstalokvkff45
     ParticipantResponse:
       type: object
       properties:
@@ -1098,13 +979,11 @@ components:
       example:
         userId: 1001
         username: trillian@infinidim.ch
-        role: OWNER
+        role: MEMBER
         status: ACTIVE
         _links:
           self:
             href: http://localhost:8080/conversations/4005/participants/1001
-      x-stoplight:
-        id: mcedz7m5zh17w
     ParticipantsResponse:
       type: object
       properties:
@@ -1140,8 +1019,6 @@ components:
         _links:
           self:
             href: http://localhost:8080/conversations/4005/participants
-      x-stoplight:
-        id: d7lhw9dbjwqgy
     ConversationCreateFromSingleUserId:
         type: object
         required:
@@ -1187,8 +1064,6 @@ components:
         - $ref: '#/components/schemas/ConversationCreateFromSingleUsername'
         - $ref: '#/components/schemas/ConversationCreateMultiple'
       additionalProperties: true
-      x-stoplight:
-        id: x41sbgtrt8gza
     ConversationResponse:
       allOf:
         - type: object
@@ -1239,8 +1114,6 @@ components:
             href: /conversations/4005/messages
           participants:
             href: /conversations/4005/participants
-      x-stoplight:
-        id: ytj30alqci3lm
     ConversationsResponse:
       type: object
       properties:
@@ -1323,8 +1196,6 @@ components:
             href: http://localhost:8080/conversations?page=1
           last:
             href: http://localhost:8080/conversations?page=10
-      x-stoplight:
-        id: 76npegstj7pec
     MessageCreate:
       type: object
       required:
@@ -1337,8 +1208,6 @@ components:
       additionalProperties: false
       example:
         body: J'aurai un peu de retard. Commencez sans moi.
-      x-stoplight:
-        id: rmm6g1vtdw2og
     MessageResponse:
       type: object
       properties:
@@ -1388,8 +1257,6 @@ components:
         _links:
           self:
             href: http://localhost:8080/conversations/4005/message/6001
-      x-stoplight:
-        id: o6x2vqqc3d3fh
     MessagesResponse:
       type: object
       properties:
@@ -1432,25 +1299,29 @@ components:
           totalElements: 1
           totalPages: 1
           number: 0
-      x-stoplight:
-        id: d7gmi1z52s7my
     MessageStatusUpdate:
-      type: object
-      properties:
-        userId:
-          type: integer
-          format: int64
-          minimum: 0
-          maximum: 9223372036854776000
-        readAt:
-          type: string
-          format: date-time
+      oneOf: 
+        - type: object
+          required:
+            - readAt
+          properties:
+            readAt:
+              type: string
+              format: date-time
+          additionalProperties: false
+          example:
+            readAt: '2025-04-24T15:03:00Z'
+        - type: object
+          required:
+            - deleted
+          properties:
+            deleted:
+              type: boolean
+          additionalProperties: false
+          example:
+            deleted: true
       additionalProperties: false
-      example:
-        userId: 1002
-        readAt: '2025-04-24T15:03:00Z'
-      x-stoplight:
-        id: hzc0l4yf0kt0r
+
   responses:
     BadRequest:
       description: Requête invalide
