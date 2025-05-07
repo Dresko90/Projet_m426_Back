@@ -165,9 +165,9 @@ public class MessageController {
 
 
     @Operation(
-        operationId = "create-messages", 
-        summary = "", 
-        description = ""
+        operationId = "create-message",
+        summary = "Ajoute un message à la conversation",
+        description = "Ajoute un message à la conversation à partir de son identifiant."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Rôle ou statut de lea participant·modifié avec succès.", 

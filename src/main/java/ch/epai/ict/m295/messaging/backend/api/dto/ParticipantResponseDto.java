@@ -1,6 +1,9 @@
 package ch.epai.ict.m295.messaging.backend.api.dto;
 
 
+import java.util.List;
+
+import org.springframework.hateoas.Link;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
 
@@ -11,7 +14,8 @@ public class ParticipantResponseDto extends RepresentationModel<ParticipantRespo
     private String role;
     private String status;
 
-    public ParticipantResponseDto(long userId, String username, String role, String status) {
+    public ParticipantResponseDto(long userId, String username, String role, String status, Link... links) {
+        super(List.of(links));
         this.userId = userId;
         this.username = username;
         this.role = role;

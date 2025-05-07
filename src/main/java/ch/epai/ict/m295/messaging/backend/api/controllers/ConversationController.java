@@ -401,22 +401,17 @@ public class ConversationController {
                 linkTo(methodOn(ParticipantController.class).getParticipants(conversation.getId(), null)).withRel("participants"));
 }
 
-    private ParticipantResponseDto toParticipantResponse(
-            Conversation conversation,
-            Participant participant) {
-
+    private ParticipantResponseDto toParticipantResponse(Conversation conversation, Participant participant) {
         return new ParticipantResponseDto(
-                        participant.getUserId(),
-                        participant.getUserName(),
-                        participant.getRole().toString(),
-                        participant.getStatus().toString())
-                .add(linkTo(methodOn(ParticipantController.class)
-                        .updateParticipant(conversation.getId(), participant.getUserId(), null, null))
-                        .withSelfRel());
+                participant.getUserId(),
+                participant.getUserName(),
+                participant.getRole().toString(),
+                participant.getStatus().toString(),
+                linkTo(methodOn(ParticipantController.class).updateParticipant(conversation.getId(), participant.getUserId(), null, null)).withSelfRel());
     }
 
     private Participant toParticipant(ParticipantDto participantDto) {
-        User user = findUser(participantDto);
+        User user = findUserByParticipant(participantDto);
         return ParticipantBuilder.create()
                 .setId(user.getId())
                 .setUsername(user.getUsername())
@@ -425,7 +420,7 @@ public class ConversationController {
                 .build();
     }
 
-    private User findUser(ParticipantDto participantDto) {
+    private User findUserByParticipant(ParticipantDto participantDto) {
         User user = null;
         if (participantDto.getUserId() != null) {
             user = userRepository.getUserById(participantDto.getUserId());

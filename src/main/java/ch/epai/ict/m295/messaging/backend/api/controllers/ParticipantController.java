@@ -279,12 +279,10 @@ public class ParticipantController {
             Participant participant) {
 
         return new ParticipantResponseDto(
-                        participant.getUserId(),
-                        participant.getUserName(),
-                        participant.getRole().toString(),
-                        participant.getStatus().toString())
-                .add(linkTo(methodOn(ParticipantController.class)
-                        .updateParticipant(conversation.getId(), participant.getUserId(), null, null))
-                        .withSelfRel());
+                participant.getUserId(),
+                participant.getUserName(),
+                participant.getRole().toString(),
+                participant.getStatus().toString(),
+                linkTo(methodOn(ParticipantController.class).updateParticipant(conversation.getId(), participant.getUserId(), null, null)).withSelfRel());
     }
 }

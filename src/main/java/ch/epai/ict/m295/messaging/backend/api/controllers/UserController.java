@@ -56,7 +56,9 @@ public class UserController {
 
     @Operation(
         operationId = "get-users",
-        summary = "Récupère la liste des utilisateur·rice·s")
+        summary = "Récupère la liste des utilisateur·rice·s",
+        description = "Récupère la liste des utilisateur·rice·s avec pagination."
+    )
     @SecurityRequirement(name = "BearerAuth")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Liste récupérée avec succès",
@@ -211,17 +213,17 @@ public class UserController {
         @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content)
     })
     @SecurityRequirement(name = "BearerAuth")
-    @GetMapping(path = "/users/{id}", produces = "application/hal+json")
+    @GetMapping(path = "/users/{userId}", produces = "application/hal+json")
     public UserResponseDto getUser(
             @Parameter(
                 description = "Identifiant de l'utilisateur·rice",
                 example = "11"
             )
-            @PathVariable() long id,
+            @PathVariable() long userId,
             @RequestAttribute User principal) {
 
-        if (principal.getId() == id || principal.getRole() == UserRoles.ADMIN ) {
-            return toUserResponse(this.userRepository.getUserById(id));
+        if (principal.getId() == userId || principal.getRole() == UserRoles.ADMIN ) {
+            return toUserResponse(this.userRepository.getUserById(userId));
         }
         throw new ResponseStatusException(HttpStatusCode.valueOf(403));
     }

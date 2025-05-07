@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.springframework.context.annotation.Configuration;
 
 import io.swagger.v3.oas.annotations.info.Contact;
@@ -25,7 +27,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
             name = "${springdoc.info.license.name}",
             url  = "${springdoc.info.license.url}"
         )),
-    security = @SecurityRequirement(name = "BearerAuth"))
+    security = @SecurityRequirement(name = "BearerAuth"),
+    tags = {
+        @Tag(name = "user", description = "Gestion des utilisateurs"),
+        @Tag(name = "token", description = "Gestion de l'authentification"),
+        @Tag(name = "conversation", description = "Gestion des conversations"),
+        @Tag(name = "participant", description = "Gestion des participants"),
+        @Tag(name = "message", description = "Gestion des messages"),
+    })
 @SecurityScheme(
     name = "BearerAuth",
     type = SecuritySchemeType.HTTP,
