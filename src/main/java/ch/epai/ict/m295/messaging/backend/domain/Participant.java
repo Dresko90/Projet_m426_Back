@@ -10,8 +10,7 @@ public class Participant {
     public enum Status {
         ACTIVE,
         INACTIVE,
-        BLOCKED,
-        INVITED
+        BLOCKED
     }
 
     private long userId;

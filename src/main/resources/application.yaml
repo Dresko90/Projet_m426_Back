@@ -1,0 +1,34 @@
+
+spring:
+    application:
+        name: messaging
+
+server:
+    servlet:
+        context-path: /api/v1
+
+springdoc:
+  # Métadonnées OpenAPI
+  info:
+    title: Instant Messaging API
+    description: >
+        API REST pour une messagerie instantanée qui comprend la gestion 
+        des utilisateur·rice·s, des conversations et des messages. Cette API est utilisée dans 
+        le cadre des modules 194, 195, 322, et 426 à l'EPAI Fribourg.
+    version: 1.0.0
+    contact:
+        name: Jérôme Frossard
+        email: jerome.frossard@edufr.ch
+        url: 'https://www.epai-ict.ch'
+    license:
+        name: Apache 2.0
+        url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+app:
+    db:
+        url: jdbc:mariadb://db:3306/messaging_db
+        username: root
+        password: epai123
+
+    jwt:
+        secretkey: Une clé secrète, très secrète, extrêmement secrète.

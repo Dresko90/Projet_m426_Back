@@ -1,5 +1,7 @@
 package ch.epai.ict.m295.messaging.backend.api.dto;
 
+import java.util.Objects;
+
 public class ParticipantDto {
     public enum Role {
         OWNER,
@@ -9,8 +11,7 @@ public class ParticipantDto {
     public enum Status {
         ACTIVE,
         INACTIVE,
-        BLOCKED,
-        INVITED
+        BLOCKED
     }
 
     private Long userId;
@@ -26,18 +27,18 @@ public class ParticipantDto {
     }
 
     public Long getUserId() {
-        return userId;
+        return this.userId;
     }
 
     public String getUsername() {
-        return username;
+        return this.username;
     }
 
     public String getRole() {
-        return role == null ? Role.MEMBER.toString() : role.toString();
+        return Objects.requireNonNullElse(this.role, Role.MEMBER).toString();
     }
 
     public String getStatus() {
-        return status == null ? Status.INVITED.toString() : status.toString();
+        return Objects.requireNonNullElse(this.status, Status.ACTIVE).toString();
     }
 }

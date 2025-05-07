@@ -12,8 +12,11 @@ INSERT INTO user (user_id, username, display_name, user_password, user_role) VAL
 USE messaging_db;
 
 -- Tokens (sheana@example.com)
-INSERT INTO token (token, user_id) VALUES ('865b1cb2-bd0e-4468-8370-a8ae9ae4bd11', 11);
-INSERT INTO token (token, user_id) VALUES ('e6efc665-6d80-4e02-975f-c2b7957db944', 13);
+INSERT INTO token (token, user_id) VALUES ('01cb1cb2-bd0e-4468-8370-a8ae9ae4bd11', 1);
+INSERT INTO token (token, user_id) VALUES ('11cb1cb2-bd0e-4468-8370-a8ae9ae4bd11', 11);
+INSERT INTO token (token, user_id) VALUES ('12cb1cb2-bd0e-4468-8370-a8ae9ae4bd11', 12);
+INSERT INTO token (token, user_id) VALUES ('13cb1cb2-bd0e-4468-8370-a8ae9ae4bd11', 13);
+INSERT INTO token (token, user_id) VALUES ('15cb1cb2-bd0e-4468-8370-a8ae9ae4bd11', 15);
 
 
 -- Conversation 100: sheana and idaho
@@ -94,14 +97,14 @@ VALUES
 INSERT INTO conversation (conversation_id, is_group) VALUES (104, TRUE);
 INSERT INTO participant (conversation_id, user_id, participant_role, participant_status)
 VALUES
-    (104, 14, 'MEMBER', 'OWNER'),
-    (104, 15, 'MEMBER', 'ACTIVE'),
-    (104, 11, 'MEMBER', 'ACTIVE');
+    (104, 11, 'OWNER', 'ACTIVE'),
+    (104, 14, 'MEMBER', 'ACTIVE'),
+    (104, 15, 'MEMBER', 'ACTIVE');
 INSERT INTO message (message_id, conversation_id, sender_id, body)
 VALUES
-    (109, 104, 14, 'Hello group!'),
+    (109, 104, 11, 'Hello group!'),
     (110, 104, 15, 'Hi everyone!'),
-    (111, 104, 11, 'Good to be here!');
+    (111, 104, 14, 'Good to be here!');
 INSERT INTO message_status (message_id, user_id, read_at, deleted)
 VALUES
     (109, 14, NULL, FALSE), (109, 15, NULL, FALSE), (109, 11, NULL, FALSE),

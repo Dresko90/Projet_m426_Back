@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -78,10 +79,12 @@ public class SqlConversationRepository implements ConversationRepository {
             try {
                 jdbcTemplate.update(
                     """
-                    INSERT INTO conversation (conversation_id) 
-                    VALUES (:conversationId)
+                    INSERT INTO conversation (conversation_id, is_group) 
+                    VALUES (:conversationId, :isGroup)
                     """,
-                    new MapSqlParameterSource("conversationId", conversation.getId())
+                    new MapSqlParameterSource()
+                        .addValue("conversationId", conversation.getId())
+                        .addValue("isGroup", conversation.isGroup())
                 );
 
                 for (Participant participant : conversation.getParticipants()) {
@@ -121,19 +124,36 @@ public class SqlConversationRepository implements ConversationRepository {
         public Object doInTransaction(@NonNull TransactionStatus status) {
             try {
                 jdbcTemplate.update(
-                    "INSERT INTO message (message_id, conversation_id, sender_id, body) " +
-                    "VALUES (:messageId, :conversationId, :senderId, :content)",
+                    """
+                    UPDATE participant p
+                    JOIN conversation c u ON p.conversation_id = p.conversation_id
+                    SET participant_status = "ACTIVE"
+                    WHERE p.conversation_id = :conversationId AND NOT c.is_group" 
+                    """,
+                    new MapSqlParameterSource("conversationId", message.getConversationId())
+                );
+
+                jdbcTemplate.update(
+                    """
+                    INSERT INTO message (message_id, conversation_id, sender_id, body)
+                    VALUES (:messageId, :conversationId, :senderId, :body)
+                    """,
                     new MapSqlParameterSource()
                         .addValue("messageId", message.getId())
                         .addValue("conversationId", message.getConversationId())
                         .addValue("senderId", message.getSenderId())
-                        .addValue("content", message.getBody())
+                        .addValue("body", message.getBody())
                 );
         
                 for(MessageStatus messageStatus: message.getMessageStatus()) {
                     jdbcTemplate.update(
-                        "INSERT INTO message_status (message_id, user_id, read_at, deleted) " +
-                        "VALUES (:messageId, :userId, :readAt, :deleted)",
+                        """
+                        INSERT INTO message_status 
+                            (message_id, user_id, read_at, deleted)
+                        SELECT :messageId, :userId, :readAt, :deleted
+                        FROM participant
+                        WHERE user_id = :userId AND participant_status = "ACTIVE"; 
+                        """,
                         new MapSqlParameterSource()
                             .addValue("messageId", message.getId())
                             .addValue("userId", messageStatus.getUserId())
@@ -166,12 +186,12 @@ public class SqlConversationRepository implements ConversationRepository {
     }
 
     @Override
-    public Conversation getConversation(long conversationId) {
+    public Conversation getConversationById(long conversationId) {
         try {
             return jdbcTemplate.queryForObject(
                 """
                 SELECT * 
-                FROM conversation 
+                FROM conversation
                 WHERE conversation_id = :conversationId
                 """,
                 new MapSqlParameterSource("conversationId", conversationId),
@@ -182,21 +202,44 @@ public class SqlConversationRepository implements ConversationRepository {
     }
 
     @Override
-    public List<Conversation> findConversationsByUser(User user) {
+    public List<Conversation> getConversationsByUser(User user, int pageNumber, int pageSize) {
         return jdbcTemplate.query(
             """
-            SELECT DISTINCT c.*
+            SELECT DISTINCT c.*, MAX(m.send_at) as last_message
             FROM conversation c
             INNER JOIN participant p ON c.conversation_id = p.conversation_id
-            WHERE p.user_id = :userId
+            LEFT JOIN message m ON c.conversation_id = m.conversation_id
+            WHERE p.user_id = :userId AND p.participant_status != "INACTIVE"
+            GROUP BY c.conversation_id
+            ORDER BY last_message DESC
+            LIMIT :limit OFFSET :offset;
             """,
-            new MapSqlParameterSource("userId", user.getId()),
+            new MapSqlParameterSource()
+                .addValue("userId", user.getId())
+                .addValue("limit", pageSize)
+                .addValue("offset", pageNumber * pageSize),
             new ConversationRowMapper()
         );
     }
 
     @Override
-    public List<Conversation> findConversationsByParticipants(Participant participant1, Participant participant2) {
+    public long getNumberOfConvesationForUser(User user) {
+        return Objects.requireNonNullElse(
+            jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(p.user_id) 
+                FROM conversation c
+                INNER JOIN participant p ON c.conversation_id = p.conversation_id
+                WHERE p.user_id = :userId AND p.participant_status != "INACTIVE"
+                """,
+                new MapSqlParameterSource("userId", user.getId()), 
+                Long.class),
+            0L
+        );
+    }
+
+    @Override
+    public List<Conversation> getConversationsByParticipants(Participant participant1, Participant participant2) {
         return jdbcTemplate.query(
             """
             SELECT c.*
@@ -294,16 +337,35 @@ public class SqlConversationRepository implements ConversationRepository {
     }
 
     @Override
-    public List<Message> getMessages(long conversationId) {
+    public List<Message> getMessages(long conversationId, int pageNumber, int pageSize) {
         return jdbcTemplate.query(
             """
             SELECT * 
             FROM message 
             WHERE conversation_id = :conversationId 
             ORDER BY send_at ASC
+            LIMIT :limit OFFSET :offset;
             """,
-            new MapSqlParameterSource("conversationId", conversationId),
+            new MapSqlParameterSource()
+                .addValue("conversationId", conversationId)
+                .addValue("limit", pageSize)
+                .addValue("offset", pageNumber * pageSize),
             new MessageRowMapper()
+        );
+    }
+
+    @Override
+    public long getNumberOfMessagesForConversation(long conversationId) {
+        return Objects.requireNonNullElse(
+            jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*) 
+                FROM message 
+                WHERE conversation_id = :conversationId
+                """,
+                new MapSqlParameterSource("conversationId", conversationId), 
+                Long.class),
+            0L
         );
     }
 

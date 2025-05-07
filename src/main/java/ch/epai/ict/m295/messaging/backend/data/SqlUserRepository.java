@@ -3,6 +3,7 @@ package ch.epai.ict.m295.messaging.backend.data;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -43,15 +44,43 @@ public class SqlUserRepository implements UserRepository {
     }
 
     @Override
-    public List<User> getUsers() {
-        return jdbcTemplate.query("SELECT * FROM user;", new UserRowMapper());
+    public List<User> getUsers(int pageNumber, int pageSize) {
+        return jdbcTemplate.query(
+            """
+            SELECT * 
+            FROM user 
+            WHERE user_id != 0
+            LIMIT :limit OFFSET :offset;
+            """,
+            new MapSqlParameterSource()
+                .addValue("limit", pageSize)
+                .addValue("offset", pageNumber * pageSize),
+            new UserRowMapper());
+    }
+
+    public long getNumberOfUsers() {
+        return Objects.requireNonNullElse(
+                jdbcTemplate.queryForObject(
+                    """
+                    SELECT COUNT(*) 
+                    FROM user 
+                    WHERE user_id != 0;
+                    """,
+                    new MapSqlParameterSource(), 
+                    Long.class),
+                0L);
+
     }
 
     @Override
-    public User getUser(long id) {
+    public User getUserById(long id) {
         try {
             return this.jdbcTemplate.queryForObject(
-                "SELECT * FROM user WHERE user_id = :id", 
+                """
+                SELECT * 
+                FROM user 
+                WHERE user_id = :id
+                """, 
                 new MapSqlParameterSource("id", id),
                 new UserRowMapper());
         } catch (EmptyResultDataAccessException e) {
@@ -63,7 +92,11 @@ public class SqlUserRepository implements UserRepository {
     public User getUserByUsername(String username) {
         try {
             return this.jdbcTemplate.queryForObject(
-                "SELECT * FROM user WHERE username = :username", 
+                """
+                SELECT * 
+                FROM user 
+                WHERE username = :username
+                """, 
                 new MapSqlParameterSource("username", username),
                 new UserRowMapper());
         } catch (EmptyResultDataAccessException e) {
@@ -74,7 +107,12 @@ public class SqlUserRepository implements UserRepository {
     @Override
     public void createUser(User user, String password) {
         jdbcTemplate.update(
-            "INSERT INTO user (user_id, username, display_name, user_password, user_role) VALUE (:id, :username, :display_name, :user_password, :user_role)",
+            """
+            INSERT INTO user 
+                (user_id, username, display_name, user_password, user_role) 
+            VALUE 
+                (:id, :username, :display_name, :user_password, :user_role)
+            """,
             new MapSqlParameterSource()
                 .addValue("id", user.getId())
                 .addValue("username", user.getUsername())
@@ -84,10 +122,33 @@ public class SqlUserRepository implements UserRepository {
     }
 
     @Override
-    public void deleteUser(long id) {
+    public void updateUser(User user) {
         jdbcTemplate.update(
-            "DELETE FROM user WHERE id = :id)",
-            new MapSqlParameterSource("id", id));
+            "UPDATE user SET username = :username, display_name = :display_name WHERE user_id = :id",
+            new MapSqlParameterSource()
+                .addValue("id", user.getId())
+                .addValue("username", user.getUsername())
+                .addValue("display_name", user.getDisplayName()));
+    }
+
+    @Override
+    public void updateUserPassword(User user, String password) {
+        jdbcTemplate.update(
+            "UPDATE user SET user_password = :user_password WHERE user_id = :id",
+            new MapSqlParameterSource()
+                .addValue("id", user.getId())
+                .addValue("user_password", new BCryptPasswordEncoder().encode(password)));
+    }
+
+    @Override
+    public void deleteUser(User user) {
+        jdbcTemplate.update(
+            """
+            DELETE 
+            FROM user 
+            WHERE user_id = :id
+            """,
+            new MapSqlParameterSource("id", user.getId()));
     }
 
     @Override
@@ -102,22 +163,5 @@ public class SqlUserRepository implements UserRepository {
         return false;
     }
 
-    @Override
-    public void updateUser(User user) {
-        jdbcTemplate.update(
-            "UPDATE user SET username = :username, display_name = :display_name WHERE user_id = :id",
-            new MapSqlParameterSource()
-                .addValue("id", user.getId())
-                .addValue("username", user.getUsername())
-                .addValue("display_name", user.getDisplayName()));
-    }
 
-    @Override
-    public void updateUserPassword(long id, String password) {
-        jdbcTemplate.update(
-            "UPDATE user SET user_password = :user_password WHERE user_id = :id",
-            new MapSqlParameterSource()
-                .addValue("id", id)
-                .addValue("user_password", new BCryptPasswordEncoder().encode(password)));
-    }
 }

@@ -20,8 +20,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @RestController
+@Tag(name ="token")
 public class TokenController {
 
     private TokenRepository tokenRepository;
@@ -32,10 +35,19 @@ public class TokenController {
         this.userRepository = userRepository;
     }
 
-    @Operation(summary = "Crée un token pour un utilisateur (login)")
+    @Operation(
+        operationId = "login",
+        summary = "Crée un token d'authentification (connexion)",
+        description = "Renvoie un token d'authentification si le nom d'utilsateur et le mot de passe sont valides.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Le jeton a été créer avec succès"),
-        @ApiResponse(responseCode = "401", description = "Non authorisé", content = @Content)
+        @ApiResponse(responseCode = "201", description = "Le jeton a été créer avec succès",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TokenDto.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+        @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
+        @ApiResponse(responseCode = "406", description = "Not Acceptable", content = @Content),
+        @ApiResponse(responseCode = "415", description = "Unsupported Media Type", content = @Content),
+        @ApiResponse(responseCode = "429", description = "Too Many Requests", content = @Content),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content),
     })
     @PostMapping(path = "/tokens", produces = "application/json")
     @ResponseStatus(HttpStatus.CREATED)
@@ -52,13 +64,20 @@ public class TokenController {
         throw new ResponseStatusException(HttpStatusCode.valueOf(401));
     }
 
-    @Operation(summary = "Supprime un token (logout)")
+    @Operation(
+        operationId = "login",
+        summary = "Supprime le token de l'utilisateur·rice connecté·e (déconnexion).",
+        description = "Supprime le token de l'utilisateur·rice connecté·e (déconnexion). Si le token est invalide ou expiré, la requête ne produit pas d'effet.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "Token supprimé avec succès.")
+        @ApiResponse(responseCode = "204", description = "Token supprimé avec succès."),
+        @ApiResponse(responseCode = "406", description = "Not Acceptable", content = @Content),
+        @ApiResponse(responseCode = "415", description = "Unsupported Media Type", content = @Content),
+        @ApiResponse(responseCode = "429", description = "Too Many Requests", content = @Content),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content)
     })
     @DeleteMapping(path = "/tokens/me")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void handleDeleteToken(@RequestBody TokenDto tokenDto) {
+    public void handleDeleteToken(@RequestAttribute TokenDto tokenDto) {
         this.tokenRepository.deleteToken(Token.fromString(tokenDto.token()));
     }
 }

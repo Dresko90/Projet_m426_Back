@@ -53,12 +53,17 @@ public class SqlTokenRepository implements TokenRepository {
     public User getUserFromToken(Token token) {
         try {
             return this.jdbcTemplate.queryForObject(
-                "SELECT user.* FROM user INNER JOIN token ON token.user_id = user.user_id WHERE token = :token", 
+                """
+                SELECT user.* 
+                FROM user 
+                INNER JOIN token ON token.user_id = user.user_id 
+                WHERE token = :token
+                """, 
                 new MapSqlParameterSource("token", token.toString()),
                 new UserRowMapper());
         } catch (EmptyResultDataAccessException e) {
             return null;
         }
     }
-
 }
+

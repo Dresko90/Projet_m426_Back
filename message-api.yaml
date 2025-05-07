@@ -14,7 +14,7 @@ info:
 servers:
   - url: 'https://message-api.n01.lab.epai-ict.ch'
     description: Production
-  - url: 'https://localhost:8080'
+  - url: 'http://localhost:8080'
     description: Développement
 security:
   - BearerAuth: []
@@ -35,7 +35,7 @@ paths:
       tags:
         - token
       operationId: login
-      summary: Crée un token (connexion).
+      summary: Crée un token authentification (connexion).
       description: "Renvoie un token d'authentification si le nom d'utilsateur et le mot de passe sont valides."
       security: []
       requestBody:
@@ -116,8 +116,6 @@ paths:
             application/hal+json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -301,7 +299,7 @@ paths:
             default: 20
       responses:
         '200':
-          description: Une liste paginée des conversations.
+          description: Liste de conversations récupérée avec succès.
           content:
             application/hal+json:
               schema:
@@ -347,7 +345,7 @@ paths:
                     - username: siona@example.com
       responses:
         '201':
-          description: La conversation a été créée avec succès.
+          description: Conversation a été créée avec succès.
           content:
             application/hal+json:
               schema:
@@ -386,7 +384,7 @@ paths:
           example: 4005
       responses:
         '200':
-          description: Les détails de la conversation.
+          description: Détails de la conversation récupérée avec succès.
           content:
             application/hal+json:
               schema:
@@ -497,7 +495,7 @@ paths:
               $ref: '#/components/schemas/ParticipantUpdate'
       responses:
         '200':
-          description: Le rôle ou le statut de lea participant·e a été modifié avec succès.
+          description: Rôle ou statut de lea participant·modifié avec succès.
           content:
             application/hal+json:
               schema:
