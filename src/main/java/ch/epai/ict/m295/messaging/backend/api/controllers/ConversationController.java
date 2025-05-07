@@ -57,7 +57,7 @@ public class ConversationController {
         summary = "Récupère les conversations de l'utilisateur·rice.", 
         description = "Récupère les conversations dans lesquelles l'utilisateur·rice connecté·e est actif·ve."
     )
-    @SecurityRequirement(name = "bearerAuth")
+    @SecurityRequirement(name = "BearerAuth")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Liste de conversations récupérée avec succès.", 
             content = @Content(
@@ -397,10 +397,8 @@ public class ConversationController {
                         conversation.getParticipants().stream()
                                 .map(participant -> toParticipantResponse(conversation, participant))
                                 .collect(Collectors.toList()))
-                .add(linkTo(methodOn(ConversationController.class).getConversation(conversation.getId(), null))
-                        .withSelfRel())
-                .add(linkTo(methodOn(ParticipantController.class).getParticipants(conversation.getId(), null))
-                        .withRel("participants"));
+                    .addLink(linkTo(methodOn(ConversationController.class).getConversation(conversation.getId(), null)).withSelfRel())
+                    .addLink(linkTo(methodOn(ParticipantController.class).getParticipants(conversation.getId(), null)).withRel("participants"));
     }
 
     private ParticipantResponseDto toParticipantResponse(
