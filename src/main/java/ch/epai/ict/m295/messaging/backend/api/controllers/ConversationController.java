@@ -392,14 +392,14 @@ public class ConversationController {
 
     private ConversationResponseDto toConversationResponse(Conversation conversation) {
         return new ConversationResponseDto(
-                        conversation.getId(),
-                        conversation.isGroup(),
-                        conversation.getParticipants().stream()
-                                .map(participant -> toParticipantResponse(conversation, participant))
-                                .collect(Collectors.toList()))
-                    .addLink(linkTo(methodOn(ConversationController.class).getConversation(conversation.getId(), null)).withSelfRel())
-                    .addLink(linkTo(methodOn(ParticipantController.class).getParticipants(conversation.getId(), null)).withRel("participants"));
-    }
+                conversation.getId(),
+                conversation.isGroup(),
+                conversation.getParticipants().stream()
+                        .map(participant -> toParticipantResponse(conversation, participant))
+                        .collect(Collectors.toList()),
+                linkTo(methodOn(ConversationController.class).getConversation(conversation.getId(), null)).withSelfRel(),
+                linkTo(methodOn(ParticipantController.class).getParticipants(conversation.getId(), null)).withRel("participants"));
+}
 
     private ParticipantResponseDto toParticipantResponse(
             Conversation conversation,

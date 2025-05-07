@@ -86,7 +86,6 @@ public class SqlConversationRepository implements ConversationRepository {
                         .addValue("conversationId", conversation.getId())
                         .addValue("isGroup", conversation.isGroup())
                 );
-
                 for (Participant participant : conversation.getParticipants()) {
                     addParticipant(conversation.getId(), participant);
                 }
@@ -126,13 +125,12 @@ public class SqlConversationRepository implements ConversationRepository {
                 jdbcTemplate.update(
                     """
                     UPDATE participant p
-                    JOIN conversation c u ON p.conversation_id = p.conversation_id
-                    SET participant_status = "ACTIVE"
-                    WHERE p.conversation_id = :conversationId AND NOT c.is_group" 
+                    JOIN conversation c ON c.conversation_id = p.conversation_id
+                    SET p.participant_status = "ACTIVE"
+                    WHERE c.conversation_id = :conversationId AND NOT c.is_group;
                     """,
                     new MapSqlParameterSource("conversationId", message.getConversationId())
                 );
-
                 jdbcTemplate.update(
                     """
                     INSERT INTO message (message_id, conversation_id, sender_id, body)
@@ -144,7 +142,6 @@ public class SqlConversationRepository implements ConversationRepository {
                         .addValue("senderId", message.getSenderId())
                         .addValue("body", message.getBody())
                 );
-        
                 for(MessageStatus messageStatus: message.getMessageStatus()) {
                     jdbcTemplate.update(
                         """
@@ -152,9 +149,12 @@ public class SqlConversationRepository implements ConversationRepository {
                             (message_id, user_id, read_at, deleted)
                         SELECT :messageId, :userId, :readAt, :deleted
                         FROM participant
-                        WHERE user_id = :userId AND participant_status = "ACTIVE"; 
+                        WHERE conversation_id = :conversationId
+                            AND user_id = :userId 
+                            AND participant_status = "ACTIVE"
                         """,
                         new MapSqlParameterSource()
+                            .addValue("conversationId", message.getConversationId())
                             .addValue("messageId", message.getId())
                             .addValue("userId", messageStatus.getUserId())
                             .addValue("readAt", messageStatus.getReadAt())
@@ -168,7 +168,6 @@ public class SqlConversationRepository implements ConversationRepository {
             return null;
         }
     }
-
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final PlatformTransactionManager transactionManager;
@@ -207,9 +206,10 @@ public class SqlConversationRepository implements ConversationRepository {
             """
             SELECT DISTINCT c.*, MAX(m.send_at) as last_message
             FROM conversation c
-            INNER JOIN participant p ON c.conversation_id = p.conversation_id
-            LEFT JOIN message m ON c.conversation_id = m.conversation_id
-            WHERE p.user_id = :userId AND p.participant_status != "INACTIVE"
+                INNER JOIN participant p ON c.conversation_id = p.conversation_id
+                LEFT JOIN message m ON c.conversation_id = m.conversation_id
+            WHERE p.user_id = :userId 
+                AND p.participant_status != "INACTIVE"
             GROUP BY c.conversation_id
             ORDER BY last_message DESC
             LIMIT :limit OFFSET :offset;
@@ -244,9 +244,11 @@ public class SqlConversationRepository implements ConversationRepository {
             """
             SELECT c.*
             FROM conversation c 
-            INNER JOIN participant p1 ON c.conversation_id = p1.conversation_id 
-            INNER JOIN participant p2 ON c.conversation_id = p2.conversation_id 
-            WHERE NOT c.is_group AND p1.user_id = :participantId1 AND p2.user_id = :participantId2
+                INNER JOIN participant p1 ON c.conversation_id = p1.conversation_id 
+                INNER JOIN participant p2 ON c.conversation_id = p2.conversation_id 
+            WHERE NOT c.is_group 
+                AND p1.user_id = :participantId1 
+                AND p2.user_id = :participantId2
             ORDER BY c.conversation_id DESC
             LIMIT 1;
             """,
@@ -337,17 +339,21 @@ public class SqlConversationRepository implements ConversationRepository {
     }
 
     @Override
-    public List<Message> getMessages(long conversationId, int pageNumber, int pageSize) {
+    public List<Message> getMessages(long conversationId, long userId, int pageNumber, int pageSize) {
         return jdbcTemplate.query(
             """
             SELECT * 
-            FROM message 
+            FROM message
+                INNER JOIN message_status ms ON message.message_id = ms.message_id
             WHERE conversation_id = :conversationId 
+                AND user_id = :userId 
+                AND deleted = FALSE
             ORDER BY send_at ASC
             LIMIT :limit OFFSET :offset;
             """,
             new MapSqlParameterSource()
                 .addValue("conversationId", conversationId)
+                .addValue("userId", userId)
                 .addValue("limit", pageSize)
                 .addValue("offset", pageNumber * pageSize),
             new MessageRowMapper()
@@ -370,7 +376,23 @@ public class SqlConversationRepository implements ConversationRepository {
     }
 
     @Override
-    public void updateMessageReadAtForUser(long messageId, long userId, LocalDateTime readAt) {
+    public Message getMessageById(long messageId) {
+        try {
+            return jdbcTemplate.queryForObject(
+                """
+                SELECT * 
+                FROM message 
+                WHERE message_id = :messageId
+                """,
+                new MapSqlParameterSource("messageId", messageId),
+                new MessageRowMapper());
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public void markMessageAsReadForUser(long messageId, long userId) {
         jdbcTemplate.update(
             """
             UPDATE message_status 
@@ -380,12 +402,12 @@ public class SqlConversationRepository implements ConversationRepository {
             new MapSqlParameterSource()
                 .addValue("messageId", messageId)
                 .addValue("userId", userId)
-                .addValue("readAt", Timestamp.valueOf(readAt))
+                .addValue("readAt", Timestamp.valueOf(LocalDateTime.now()))
         );
     }
 
     @Override
-    public void deleteMessageForUser(long messageId, long userId) {
+    public void markMessageAsDeletedForUser(long messageId, long userId) {
         jdbcTemplate.update(
             """
             UPDATE message_status 
@@ -417,5 +439,5 @@ public class SqlConversationRepository implements ConversationRepository {
             new MapSqlParameterSource("messageId", messageId),
             new MessageStatusRowMapper()
         );
-    } 
+    }
 }

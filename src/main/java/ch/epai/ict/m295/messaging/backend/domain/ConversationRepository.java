@@ -1,6 +1,5 @@
 package ch.epai.ict.m295.messaging.backend.domain;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ConversationRepository {
@@ -16,9 +15,10 @@ public interface ConversationRepository {
     void updateParticipant(long conversationId, Participant participant);
     void removeParticipant(long conversationId, long userId);
     
-    List<Message> getMessages(long conversationId, int pageNumber, int pageSize);
+    List<Message> getMessages(long conversationId, long userId, int pageNumber, int pageSize);
     long getNumberOfMessagesForConversation(long conversationId);
+    Message getMessageById(long messageId);
     void createMessage(Message message);
-    void updateMessageReadAtForUser(long messageId, long userId, LocalDateTime readAt);
-    void deleteMessageForUser(long messageId, long userId); 
+    void markMessageAsReadForUser(long messageId, long userId);
+    void markMessageAsDeletedForUser(long messageId, long userId); 
 }

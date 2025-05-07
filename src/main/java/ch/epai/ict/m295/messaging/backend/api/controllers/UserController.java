@@ -57,7 +57,7 @@ public class UserController {
     @Operation(
         operationId = "get-users",
         summary = "Récupère la liste des utilisateur·rice·s")
-    @SecurityRequirement(name = "bearerAuth")
+    @SecurityRequirement(name = "BearerAuth")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Liste récupérée avec succès",
             content = @Content(
@@ -129,7 +129,7 @@ public class UserController {
         operationId = "create-users",
         summary = "Crée un compte d'utilisateur·rice.",
         description = "Crée un compte avec un nom d'utilisateur·rice et un mot de passe. Le nom peut être soit une adresse e-mail, soit un numéro de téléphone au format E.164.")
-    @SecurityRequirement(name = "bearerAuth")
+    @SecurityRequirement(name = "BearerAuth")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Utilisateur·rice créé",
             content = @Content(
@@ -210,7 +210,7 @@ public class UserController {
         @ApiResponse(responseCode = "429", description = "Too Many Requests", content = @Content),
         @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content)
     })
-    @SecurityRequirement(name = "bearerAuth")
+    @SecurityRequirement(name = "BearerAuth")
     @GetMapping(path = "/users/{id}", produces = "application/hal+json")
     public UserResponseDto getUser(
             @Parameter(
@@ -254,7 +254,7 @@ public class UserController {
         @ApiResponse(responseCode = "415", description = "Unsupported Media Type", content = @Content),
         @ApiResponse(responseCode = "429", description = "Too Many Requests", content = @Content),
         @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content),    })
-    @SecurityRequirement(name = "bearerAuth")
+    @SecurityRequirement(name = "BearerAuth")
     @PatchMapping(path = "/users/{userId}", consumes = "application/json", produces = "application/hal+json")
     public UserResponseDto modifyUser(
             @Parameter(
@@ -335,7 +335,7 @@ public class UserController {
         @ApiResponse(responseCode = "429", description = "Too Many Requests", content = @Content),
         @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content)
     })
-    @SecurityRequirement(name = "bearerAuth")
+    @SecurityRequirement(name = "BearerAuth")
     @DeleteMapping(path = "/users/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable long userId, @RequestAttribute User principal) {

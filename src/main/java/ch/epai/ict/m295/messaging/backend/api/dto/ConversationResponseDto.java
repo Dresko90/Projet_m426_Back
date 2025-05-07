@@ -1,23 +1,20 @@
 package ch.epai.ict.m295.messaging.backend.api.dto;
 
 import java.util.List;
-import java.util.Map;
 
-import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.core.Relation;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 @Relation(collectionRelation = "conversations")
-public class ConversationResponseDto extends RepresentationModel<ConversationResponseDto> {
+public class ConversationResponseDto extends CollectionModel<ParticipantResponseDto> {
     private long id;
     private boolean isGroup;
-    private List<ParticipantResponseDto> participants;
 
-    public ConversationResponseDto(long id, boolean isGroup, List<ParticipantResponseDto> participants) {
+    public ConversationResponseDto(long id, boolean isGroup, List<ParticipantResponseDto> participants, Link... links) {
+        super(participants, List.of(links), null);
         this.id = id;
         this.isGroup = isGroup;
-        this.participants = participants;
     }
 
     public long getId() {
@@ -27,9 +24,4 @@ public class ConversationResponseDto extends RepresentationModel<ConversationRes
     public boolean isGroup() {
         return isGroup;
     }
-
-    @JsonProperty("_embedded")
-    public Map<String, List<ParticipantResponseDto>> getEmbedded() {
-        return Map.of("participants", participants);
-    } 
 }

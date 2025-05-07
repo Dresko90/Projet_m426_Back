@@ -24,6 +24,7 @@ import ch.epai.ict.m295.messaging.backend.api.dto.ConversationsReponseDto;
 import ch.epai.ict.m295.messaging.backend.api.dto.MessageCreateDto;
 import ch.epai.ict.m295.messaging.backend.api.dto.MessageResponseDto;
 import ch.epai.ict.m295.messaging.backend.api.dto.MessageStatusDto;
+import ch.epai.ict.m295.messaging.backend.api.dto.MessageUpdateDto;
 import ch.epai.ict.m295.messaging.backend.api.dto.MessagesResponseDto;
 import ch.epai.ict.m295.messaging.backend.api.dto.ParticipantResponseDto;
 import ch.epai.ict.m295.messaging.backend.domain.Conversation;
@@ -59,7 +60,7 @@ public class MessageController {
         summary = "Récupère les messages d'une conversation",
         description = "Récupère les messages d'une conversation donnée. L'utilisateur·rice connecté·e doit être membre de la conversation."
     )
-    @SecurityRequirement(name = "bearerAuth")
+    @SecurityRequirement(name = "BearerAuth")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Liste de messages récupérée avec succès.", 
             content = @Content(
@@ -152,7 +153,7 @@ public class MessageController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation not found");
         }
         
-        List<Message> messages = conversationRepository.getMessages(conversationId, pageNumber, pageSize);
+        List<Message> messages = conversationRepository.getMessages(conversationId, principal.getId(), pageNumber, pageSize);
         long totalElements = conversationRepository.getNumberOfMessagesForConversation(conversationId);
         return new MessagesResponseDto(
                 messages.stream()
@@ -194,13 +195,32 @@ public class MessageController {
         @ApiResponse(responseCode = "429", description = "Too Many Requests", content = @Content),
         @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content)
     })
-    @PostMapping("/messages")
+    @PostMapping(path = "/messages", produces = "application/hal+json")
     @ResponseStatus(HttpStatus.CREATED)
-    public MessageResponseDto createMessages(@PathVariable long conversationId, @RequestBody MessageCreateDto createMessageDto, @RequestAttribute User principal) {
+    public MessageResponseDto createMessages(
+            @Parameter(
+                description = "Identifiant de la conversation",
+                example = "100"
+            )
+            @PathVariable long conversationId, 
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                content = @Content(
+                    mediaType = "application/json",
+                    examples = {
+                        @ExampleObject(
+                            value = """
+                            {
+                                "message": "Salut! Quoi de neuf?"
+                            }
+                            """),
+
+                        }))
+            @RequestBody MessageCreateDto messageCreateDto, 
+            @RequestAttribute User principal) {
         Message message = MessageBuilder.create()
             .setConversation(conversationRepository.getConversationById(conversationId))
             .setSenderId(principal.getId())
-            .setBody(createMessageDto.body())
+            .setBody(messageCreateDto.message())
             .build();
         conversationRepository.createMessage(message);
         return toMessageResponse(message);
@@ -213,26 +233,38 @@ public class MessageController {
             """
             Modifie le statut d’un message pour l’utilisateur·rice connecté·e.
 
-            * Si le message est lu, le champ `readAt` est mis à jour avec la date et l’heure de lecture.
+            * Pour marquer le message comme lu, le champ `read` est mis à true. Si le message a déjà été lu, l'opération n'a pas d'effet.
 
-            * Si le message doit être supprimé pour l'utilisateur·rice, le champ `deleted` est mis à `true`. Cette opération est irréversible et entraîne la suppression logique du message pour cette personne uniquement.
+            * Pour marquer le message comme supprimé, le champ `deleted` est mis à `true`. Cette opération est irréversible et entraîne la suppression logique du message pour cette personne.
             """
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Rôle ou statut de lea participant·modifié avec succès.", 
+        @ApiResponse(responseCode = "200", description = "Statut·modifié avec succès.", 
             content = @Content(
                 schema = @Schema(implementation = ParticipantResponseDto.class),
                 examples = 
                     @ExampleObject(
                         value = """
                             {
-                                "userId": 15,
-                                "username": "fallom@example.com",
-                                "role": "MEMBER",
-                                "status": "INACTIVE",
+                                "id": 100,
+                                "senderId": 11,
+                                "body": "Hi Idaho!",
+                                "participantStatus": [
+                                    {
+                                        "userId": 11,
+                                        "readAt": "2025-05-07T20:55:17",
+                                        "deleted": false
+                                    },
+                                    {
+                                        "userId": 12,
+                                        "readAt": null,
+                                        "deleted": false
+                                    }
+                                ],
+                                "sentAt": "2025-05-07T20:08:12",
                                 "_links": {
                                     "self": {
-                                        "href": "http://localhost:8080/api/v1/conversation/110/participants/15"
+                                        "href": "/api/v1/conversation/100/messages/100"
                                     }
                                 }
                             }
@@ -244,9 +276,62 @@ public class MessageController {
         @ApiResponse(responseCode = "429", description = "Too Many Requests", content = @Content),
         @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content)
     })
-    @PatchMapping("/messages/{messageId}")
-    public MessageResponseDto updateMessageStatus(@PathVariable long conversationId, @PathVariable long messageId, User principal) {
-        return null;
+    @PatchMapping(path = "/messages/{messageId}", produces = "application/hal+json")
+    public MessageResponseDto updateMessageStatus(
+            @Parameter(
+                description = "Identifiant de la conversation",
+                example = "100"
+            )
+            @PathVariable long conversationId, 
+            @Parameter(
+                description = "Identifiant de la conversation",
+                example = "100"
+            )
+            @PathVariable long messageId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                content = @Content(
+                    mediaType = "application/json",
+                    examples = {
+                        @ExampleObject(
+                            name = "Marquer le message comme lu.",
+                            value = """
+                            {
+                                "read": true
+                            }
+                            """),
+                        @ExampleObject(
+                            name = "Marquer le message comme supprimer.",
+                            value = """
+                            {
+                                "delete": true
+                            }
+                            """),
+                        }))
+            @RequestBody MessageUpdateDto messageUpdateDto,
+            @RequestAttribute User principal) {
+
+        Conversation conversation = conversationRepository.getConversationById(conversationId);
+        if (conversation == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation not found");
+        }
+        Message message = conversationRepository.getMessageById(messageId);
+        if (message == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Message not found");
+        }
+        if (messageUpdateDto.read() != null && messageUpdateDto.delete() != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only one of read or delete can be set");
+        }
+        if (messageUpdateDto.read() == null && messageUpdateDto.delete() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Either read or delete must be set");
+        }
+
+        if (messageUpdateDto.read() != null && messageUpdateDto.read()) {
+            conversationRepository.markMessageAsReadForUser(messageId, principal.getId());
+        }
+        if (messageUpdateDto.delete() != null && messageUpdateDto.delete()) {
+            conversationRepository.markMessageAsDeletedForUser(messageId, principal.getId());
+        }
+        return toMessageResponse(conversationRepository.getMessageById(messageId));
     }
 
     private MessageResponseDto toMessageResponse(Message message) {
@@ -259,7 +344,7 @@ public class MessageController {
                 .stream()
                 .map(messageStatus -> toMessageStatusDto(messageStatus))
                 .collect(Collectors.toList()))
-            .add(linkTo(methodOn(MessageController.class).updateMessageStatus(message.getConversationId(), message.getId(), null)).withSelfRel());
+            .add(linkTo(methodOn(MessageController.class).updateMessageStatus(message.getConversationId(), message.getId(), null, null)).withSelfRel());
 
     }
 
