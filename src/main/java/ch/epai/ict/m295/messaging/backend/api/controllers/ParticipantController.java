@@ -45,79 +45,79 @@ public class ParticipantController {
         this.conversationRepository = conversationRepository;
     }
 
-    @Operation(
-        operationId = "get-participants", 
-        summary = "Récupèrer la liste des participant·e·s d'une conversation.", 
-        description = "Récupère la liste des participant·e·s d'une conversation à partir de son identifiant."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Liste de participants récupérée avec succès.", 
-            content = @Content(
-                schema = @Schema(implementation = ParticipantResponseDto.class),
-                examples = 
-                    @ExampleObject(
-                        value = """
-                            {
-                                "_embedded": {
-                                    "participants": [
-                                        {
-                                            "userId": 11,
-                                            "username": "sheana@example.com",
-                                            "role": "MEMBER",
-                                            "status": "ACTIVE",
-                                            "_links": {
-                                                "self": {
-                                                    "href": "http://localhost:8080/api/v1/conversation/100/participants/11"
-                                                }
-                                            }
-                                        },
-                                        {
-                                            "userId": 12,
-                                            "username": "idaho@example.com",
-                                            "role": "MEMBER",
-                                            "status": "ACTIVE",
-                                            "_links": {
-                                                "self": {
-                                                    "href": "http://localhost:8080/api/v1/conversation/100/participants/12"
-                                                }
-                                            }
-                                        }
-                                    ]
-                                },
-                                "_links": {
-                                    "self": {
-                                        "href": "http://localhost:8080/api/v1/conversation/100/participants"
-                                    }
-                                }
-                            }
-                            """))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
-            @ApiResponse(responseCode = "406", description = "Not Acceptable", content = @Content),
-            @ApiResponse(responseCode = "415", description = "Unsupported Media Type", content = @Content),
-            @ApiResponse(responseCode = "429", description = "Too Many Requests", content = @Content),
-            @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content)
-    })
-    @GetMapping(path = "/participants", produces = "application/hal+json")
-    public CollectionModel<ParticipantResponseDto> getParticipants(
-            @Parameter(
-                description = "Identifiant de la conversation",
-                example = "110"
-            )
-            @PathVariable long conversationId,
-            @RequestAttribute User principal) {
+    // @Operation(
+    //     operationId = "get-participants", 
+    //     summary = "Récupèrer la liste des participant·e·s d'une conversation.", 
+    //     description = "Récupère la liste des participant·e·s d'une conversation à partir de son identifiant."
+    // )
+    // @ApiResponses(value = {
+    //         @ApiResponse(responseCode = "200", description = "Liste de participants récupérée avec succès.", 
+    //         content = @Content(
+    //             schema = @Schema(implementation = ParticipantResponseDto.class),
+    //             examples = 
+    //                 @ExampleObject(
+    //                     value = """
+    //                         {
+    //                             "_embedded": {
+    //                                 "participants": [
+    //                                     {
+    //                                         "userId": 11,
+    //                                         "username": "sheana@example.com",
+    //                                         "role": "MEMBER",
+    //                                         "status": "ACTIVE",
+    //                                         "_links": {
+    //                                             "self": {
+    //                                                 "href": "http://localhost:8080/api/v1/conversation/100/participants/11"
+    //                                             }
+    //                                         }
+    //                                     },
+    //                                     {
+    //                                         "userId": 12,
+    //                                         "username": "idaho@example.com",
+    //                                         "role": "MEMBER",
+    //                                         "status": "ACTIVE",
+    //                                         "_links": {
+    //                                             "self": {
+    //                                                 "href": "http://localhost:8080/api/v1/conversation/100/participants/12"
+    //                                             }
+    //                                         }
+    //                                     }
+    //                                 ]
+    //                             },
+    //                             "_links": {
+    //                                 "self": {
+    //                                     "href": "http://localhost:8080/api/v1/conversation/100/participants"
+    //                                 }
+    //                             }
+    //                         }
+    //                         """))),
+    //         @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+    //         @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
+    //         @ApiResponse(responseCode = "406", description = "Not Acceptable", content = @Content),
+    //         @ApiResponse(responseCode = "415", description = "Unsupported Media Type", content = @Content),
+    //         @ApiResponse(responseCode = "429", description = "Too Many Requests", content = @Content),
+    //         @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content)
+    // })
+    // @GetMapping(path = "/participants", produces = "application/hal+json")
+    // public CollectionModel<ParticipantResponseDto> getParticipants(
+    //         @Parameter(
+    //             description = "Identifiant de la conversation",
+    //             example = "110"
+    //         )
+    //         @PathVariable long conversationId,
+    //         @RequestAttribute User principal) {
 
-        Conversation conversation = conversationRepository.getConversationById(conversationId);
-        if (!conversation.isParticipant(principal.getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this conversation");
-        }
-        return CollectionModel.of(
-                conversation.getParticipants().stream()
-                        .map(participant -> toParticipantResponse(conversation, participant))
-                        .collect(Collectors.toList()),
-                linkTo(methodOn(ParticipantController.class).getParticipants(conversationId, principal))
-                        .withSelfRel());
-    }
+    //     Conversation conversation = conversationRepository.getConversationById(conversationId);
+    //     if (!conversation.isParticipant(principal.getId())) {
+    //         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this conversation");
+    //     }
+    //     return CollectionModel.of(
+    //             conversation.getParticipants().stream()
+    //                     .map(participant -> toParticipantResponse(conversation, participant))
+    //                     .collect(Collectors.toList()),
+    //             linkTo(methodOn(ParticipantController.class).getParticipants(conversationId, principal))
+    //                     .withSelfRel());
+    // }
 
     @Operation(
         operationId = "update-participant", 
