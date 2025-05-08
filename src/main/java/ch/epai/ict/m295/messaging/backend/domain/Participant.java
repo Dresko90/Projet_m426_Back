@@ -14,12 +14,15 @@ public class Participant {
     }
 
     private long userId;
+    private long conversationId;
     private String username;
     private Role role;
     private Status status;
 
-    public Participant(long userId, String username, Role role, Status status) {
+
+    public Participant(long userId, long conversationId, String username, Role role, Status status) {
         this.userId = userId;
+        this.conversationId = conversationId;
         this.username = username;
         this.role = role;
         this.status = status;
@@ -27,6 +30,10 @@ public class Participant {
 
     public long getUserId() {
         return this.userId;
+    }
+
+    public long getConversationId() {
+        return this.conversationId;
     }
 
     public String getUserName() {

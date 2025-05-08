@@ -35,8 +35,9 @@ public class SqlConversationRepository implements ConversationRepository {
     private class ParticipantRowMapper implements RowMapper<Participant> {
         @Override
         public Participant mapRow(@NonNull ResultSet rs, int rowNum) throws SQLException {
-            return new ParticipantBuilder()
+            return ParticipantBuilder.create()
                 .setId(rs.getLong("user_id"))
+                .setConversationId(rs.getLong("conversation_id"))
                 .setUsername(rs.getString("username"))
                 .setRole(Participant.Role.valueOf(rs.getString("participant_role")))
                 .setStatus(Participant.Status.valueOf(rs.getString("participant_status")))
@@ -169,6 +170,30 @@ public class SqlConversationRepository implements ConversationRepository {
         }
     }
 
+    private class AddParticipantsTransaction implements TransactionCallback<Object> {
+        private final long conversationId;
+        private final List<Participant> participants;
+
+        public AddParticipantsTransaction(long conversationId, List<Participant> participants) {
+            this.conversationId = conversationId;
+            this.participants = participants;
+        }
+
+        @Override
+        public Object doInTransaction(@NonNull TransactionStatus status) {
+            try {
+                for (Participant participant : participants) {
+                    addParticipant(conversationId, participant);
+                }
+            } catch (Exception e) {
+                status.setRollbackOnly();
+                throw e;
+            }
+            return null;
+        }
+    }
+
+
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final PlatformTransactionManager transactionManager;
 
@@ -275,6 +300,13 @@ public class SqlConversationRepository implements ConversationRepository {
     }
 
     @Override
+    public void addParticipants(long conversationId, List<Participant> participants) {
+        TransactionTemplate transactionTemplate = new TransactionTemplate(this.transactionManager);
+        AddParticipantsTransaction transaction = new AddParticipantsTransaction(conversationId, participants);
+        transactionTemplate.execute(transaction);
+    }
+
+    @Override
     public void addParticipant(long conversationId, Participant participant) {
         jdbcTemplate.update(
             """
@@ -282,13 +314,14 @@ public class SqlConversationRepository implements ConversationRepository {
                 (conversation_id, user_id, participant_role, participant_status)
             VALUES 
                 (:conversationId, :userId, :role, :status)
+            ON DUPLICATE KEY UPDATE
+                participant_role = :role, participant_status = :status
             """,
             new MapSqlParameterSource()
                 .addValue("conversationId", conversationId)
                 .addValue("userId", participant.getUserId())
                 .addValue("role", participant.getRole().name())
-                .addValue("status", participant.getStatus().name())
-        );
+                .addValue("status", participant.getStatus().name()));
     }
 
     @Override
@@ -423,9 +456,9 @@ public class SqlConversationRepository implements ConversationRepository {
     private List<Participant> getParticipants(long conversationId) {
         return jdbcTemplate.query(
             """
-            SELECT p.user_id, u.username, p.participant_role, p.participant_status
+            SELECT p.user_id, u.username, p.participant_role, p.participant_status, p.conversation_id
             FROM participant p
-            INNER JOIN user u ON p.user_id = u.user_id
+                INNER JOIN user u ON p.user_id = u.user_id
             WHERE p.conversation_id = :conversationId
             """,
             new MapSqlParameterSource("conversationId", conversationId),

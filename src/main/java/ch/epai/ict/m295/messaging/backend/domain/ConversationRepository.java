@@ -12,6 +12,7 @@ public interface ConversationRepository {
     void deleteConversation(long conversationId);
 
     void addParticipant(long conversationId, Participant participant);
+    void addParticipants(long conversationId, List<Participant> participants);
     void updateParticipant(long conversationId, Participant participant);
     void removeParticipant(long conversationId, long userId);
     

@@ -40,8 +40,9 @@ public class TokenController {
         summary = "Crée un token d'authentification (connexion)",
         description = "Renvoie un token d'authentification si le nom d'utilsateur et le mot de passe sont valides.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Le jeton a été créer avec succès",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TokenDto.class))),
+        @ApiResponse(responseCode = "201", description = "Jeton créé avec succès",
+            content = @Content(schema = @Schema(implementation = TokenDto.class))),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
         @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
         @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
         @ApiResponse(responseCode = "406", description = "Not Acceptable", content = @Content),

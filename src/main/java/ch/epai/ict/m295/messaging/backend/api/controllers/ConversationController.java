@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import ch.epai.ict.m295.messaging.backend.api.dto.ConversationResponseDto;
-import ch.epai.ict.m295.messaging.backend.api.dto.ConversationsReponseDto;
+import ch.epai.ict.m295.messaging.backend.api.dto.ConversationsResponseDto;
 import ch.epai.ict.m295.messaging.backend.api.dto.ConversationCreateDto;
 import ch.epai.ict.m295.messaging.backend.api.dto.ParticipantDto;
 import ch.epai.ict.m295.messaging.backend.api.dto.ParticipantResponseDto;
@@ -39,6 +39,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 @RestController
 @Tag(name = "conversation")
@@ -54,14 +56,14 @@ public class ConversationController {
 
     @Operation(
         operationId = "get-conversations", 
-        summary = "Récupère les conversations de l'utilisateur·rice.", 
-        description = "Récupère les conversations dans lesquelles l'utilisateur·rice connecté·e est actif·ve."
+        summary = "Récupère les conversations de l'utilisateur·rice connecté·e.", 
+        description = "Récupère les conversations dans lesquelles l'utilisateur·rice connecté·e est actif·ve. Les conversations qu'iel a quittées ou dans lesquelles iel est bloqué·e n'apparaissent pas dans la liste."
     )
     @SecurityRequirement(name = "BearerAuth")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Liste de conversations récupérée avec succès.", 
+        @ApiResponse(responseCode = "200", description = "Conversations récupérées avec succès.", 
             content = @Content(
-                schema = @Schema(implementation = ConversationsReponseDto.class),
+                schema = @Schema(implementation = ConversationsResponseDto.class),
                 examples = 
                     @ExampleObject(
                         value = """
@@ -128,12 +130,21 @@ public class ConversationController {
         @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content)
     })
     @GetMapping(path = "/conversations", produces = "application/hal+json")
-    public ConversationsReponseDto getConversations(
-            @RequestParam(name = "page", defaultValue = "0") int pageNumber,
+    public ConversationsResponseDto getConversations(
+            @Parameter(
+                description = "Numéro de la page à récupérer (la première page est 0).",
+                required = true)
+            @Min(0) @Max(100)
+            @RequestParam(name = "page",defaultValue = "0") int pageNumber,
+            @Parameter(
+                description = "Nombre d'éléments de la page à récupérer (≤ 100).",
+                required = true
+            )
+            @Min(20) @Max(100)
             @RequestParam(name = "size", defaultValue = "20") int pageSize,
             @RequestAttribute User principal) {
         
-        return new ConversationsReponseDto(
+        return new ConversationsResponseDto(
             conversationRepository.getConversationsByUser(principal, pageNumber, pageSize ).stream()
                 .map(conversation -> toConversationResponse(conversation))
                 .collect(Collectors.toList()),
@@ -148,8 +159,15 @@ public class ConversationController {
     @Operation(
         operationId = "create-conversation", 
         summary = "Crée une nouvelle conversation.", 
-        description = "Crée une nouvelle conversation avec un ou plusieurs participant·e·s. Le nom d'utilisateur peut être soit une adresse e-mail, soit un numéro de téléphone au format E.164."
-    )
+        description = """
+            Crée une nouvelle conversation pour l'utilisateur·rice connecté·e et une ou plusieurs autre personne.
+
+            Un·e participant·e peut être spécifié·e par son adresse e-mail, son numéro de téléphone au format E.164, ou l'identifiant de son compte (userId). 
+            
+            * Dans le cas d'une conversation privée, s’il existe déjà une conversation entre les deux interlocuteur·rice·s, elle est retournée. 
+            
+            * Dans le cas d'une conversation à plusieurs, une nouvelle conversation est créée à chaque appel.
+            """)
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Conversation a été créée avec succès.", 
             content = @Content(
@@ -251,6 +269,7 @@ public class ConversationController {
                             }
                             """)
                 })),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
         @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
         @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
         @ApiResponse(responseCode = "406", description = "Not Acceptable", content = @Content),
@@ -262,7 +281,7 @@ public class ConversationController {
     @ResponseStatus(HttpStatus.CREATED)
     public ConversationResponseDto createConversation(
         @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            description = "Utilisateur·rice à créer",
+            description = "Données de la conversation à créer",
             required = true,
             content = @Content(
                 mediaType = "application/json",
@@ -340,7 +359,7 @@ public class ConversationController {
                                             "status": "ACTIVE",
                                             "_links": {
                                                 "self": {
-                                                    "href": "http://localhost:8080/api/v1/conversation/100/participants/11"
+                                                    "href": "/api/v1/conversation/100/participants/11"
                                                 }
                                             }
                                         },
@@ -351,7 +370,7 @@ public class ConversationController {
                                             "status": "ACTIVE",
                                             "_links": {
                                                 "self": {
-                                                    "href": "http://localhost:8080/api/v1/conversation/100/participants/12"
+                                                    "href": "/api/v1/conversation/100/participants/12"
                                                 }
                                             }
                                         }
@@ -359,16 +378,17 @@ public class ConversationController {
                                 },
                                 "_links": {
                                     "self": {
-                                        "href": "http://localhost:8080/api/v1/conversations/100"
+                                        "href": "/api/v1/conversations/100"
                                     },
                                     "participants": {
-                                        "href": "http://localhost:8080/api/v1/conversation/100/participants"
+                                        "href": "/api/v1/conversation/100/participants"
                                     }
                                 }
                             }
                             """))),
             @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
             @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Conversation non trouvée", content = @Content),
             @ApiResponse(responseCode = "406", description = "Not Acceptable", content = @Content),
             @ApiResponse(responseCode = "415", description = "Unsupported Media Type", content = @Content),
             @ApiResponse(responseCode = "429", description = "Too Many Requests", content = @Content),
@@ -384,8 +404,11 @@ public class ConversationController {
             @RequestAttribute User principal) {
 
         Conversation conversation = conversationRepository.getConversationById(conversationId);
+        if (conversation == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation non trouvée");
+        }
         if (!conversation.isParticipant(principal.getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this conversation");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access à cette conversation non autorisé");
         }
         return toConversationResponse(conversation);
     }
@@ -397,16 +420,16 @@ public class ConversationController {
                 conversation.getParticipants().stream()
                         .map(participant -> toParticipantResponse(conversation, participant))
                         .collect(Collectors.toList()),
-                linkTo(methodOn(ConversationController.class).getConversation(conversation.getId(), null)).withSelfRel());
-                //linkTo(methodOn(ParticipantController.class).getParticipants(conversation.getId(), null)).withRel("participants"));
+                linkTo(methodOn(ConversationController.class).getConversation(conversation.getId(), null)).withSelfRel(),
+                linkTo(methodOn(ParticipantController.class).addParticipants(conversation.getId(), null, null)).withRel("participants"));
 }
 
     private ParticipantResponseDto toParticipantResponse(Conversation conversation, Participant participant) {
         return new ParticipantResponseDto(
                 participant.getUserId(),
                 participant.getUserName(),
-                participant.getRole().toString(),
-                participant.getStatus().toString(),
+                participant.getRole(),
+                participant.getStatus(),
                 linkTo(methodOn(ParticipantController.class).updateParticipant(conversation.getId(), participant.getUserId(), null, null)).withSelfRel());
     }
 
@@ -415,8 +438,8 @@ public class ConversationController {
         return ParticipantBuilder.create()
                 .setId(user.getId())
                 .setUsername(user.getUsername())
-                .setRole(Participant.Role.valueOf(participantDto.getRole()))
-                .setStatus(Participant.Status.valueOf(participantDto.getStatus()))
+                .setRole(Participant.Role.valueOf(participantDto.getRole().toString()))
+                .setStatus(Participant.Status.valueOf(participantDto.getStatus().toString()))
                 .build();
     }
 

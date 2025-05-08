@@ -150,6 +150,7 @@ public class UserController {
                                 }
                             }
                             """))),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
         @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
         @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
         @ApiResponse(responseCode = "406", description = "Not Acceptable", content = @Content),
@@ -160,7 +161,7 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponseDto createUser(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                description = "Utilisateur·rice à créer",
+                description = "Données de l'utilisateur·rice à créer",
                 required = true,
                 content = @Content(
                     mediaType = "application/json",
@@ -250,6 +251,8 @@ public class UserController {
                                 }
                             }
                             """))),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
+        @ApiResponse(responseCode = "404", description = "Utilisateur·rice non trouvé·e", content = @Content),
         @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
         @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
         @ApiResponse(responseCode = "406", description = "Not Acceptable", content = @Content),
@@ -265,7 +268,7 @@ public class UserController {
             )
             @PathVariable long userId,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                description = "Utilisateur·rice à créer",
+                description = "Données de l'utilisateur·rice à modifier",
                 required = true,
                 content = @Content(
                     mediaType = "application/json",

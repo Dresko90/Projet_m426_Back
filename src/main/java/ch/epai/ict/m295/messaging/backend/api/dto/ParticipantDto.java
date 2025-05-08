@@ -2,6 +2,10 @@ package ch.epai.ict.m295.messaging.backend.api.dto;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
 public class ParticipantDto {
     public enum Role {
         OWNER,
@@ -34,11 +38,13 @@ public class ParticipantDto {
         return this.username;
     }
 
-    public String getRole() {
-        return Objects.requireNonNullElse(this.role, Role.MEMBER).toString();
+    @Schema(description = "Rôle de lea participant·e", defaultValue = "MEMBER")
+    public Role getRole() {
+        return Objects.requireNonNullElse(this.role, Role.MEMBER);
     }
 
-    public String getStatus() {
-        return Objects.requireNonNullElse(this.status, Status.ACTIVE).toString();
+    @Schema(description = "Statut de lea participant·e", defaultValue = "ACTIVE")
+    public Status getStatus() {
+        return Objects.requireNonNullElse(this.status, Status.ACTIVE);
     }
 }

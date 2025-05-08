@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import ch.epai.ict.m295.messaging.backend.api.dto.ConversationsReponseDto;
+import ch.epai.ict.m295.messaging.backend.api.dto.ConversationsResponseDto;
 import ch.epai.ict.m295.messaging.backend.api.dto.MessageCreateDto;
 import ch.epai.ict.m295.messaging.backend.api.dto.MessageResponseDto;
 import ch.epai.ict.m295.messaging.backend.api.dto.MessageStatusDto;
@@ -64,7 +64,7 @@ public class MessageController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Liste de messages récupérée avec succès.", 
             content = @Content(
-                schema = @Schema(implementation = ConversationsReponseDto.class),
+                schema = @Schema(implementation = ConversationsResponseDto.class),
                 examples = 
                     @ExampleObject(
                         value = """
@@ -134,6 +134,7 @@ public class MessageController {
                             """))),
         @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
         @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
+        @ApiResponse(responseCode = "404", description = "Conversation non trouvée", content = @Content),
         @ApiResponse(responseCode = "415", description = "Unsupported Media Type", content = @Content),
         @ApiResponse(responseCode = "429", description = "Too Many Requests", content = @Content),
         @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content)
@@ -150,9 +151,8 @@ public class MessageController {
         
         Conversation conversation = conversationRepository.getConversationById(conversationId);
         if (conversation == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation non trouvée");
         }
-        
         List<Message> messages = conversationRepository.getMessages(conversationId, principal.getId(), pageNumber, pageSize);
         long totalElements = conversationRepository.getNumberOfMessagesForConversation(conversationId);
         return new MessagesResponseDto(
@@ -170,7 +170,7 @@ public class MessageController {
         description = "Ajoute un message à la conversation à partir de son identifiant."
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Rôle ou statut de lea participant·modifié avec succès.", 
+        @ApiResponse(responseCode = "201", description = "Message créé avec succès.", 
             content = @Content(
                 schema = @Schema(implementation = ParticipantResponseDto.class),
                 examples = 
@@ -183,12 +183,14 @@ public class MessageController {
                                 "status": "INACTIVE",
                                 "_links": {
                                     "self": {
-                                        "href": "http://localhost:8080/api/v1/conversation/110/participants/15"
+                                        "href": "/api/v1/conversation/110/participants/15"
                                     }
                                 }
                             }
                             """))),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
         @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+        @ApiResponse(responseCode = "404", description = "Conversation non trouvée", content = @Content),
         @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
         @ApiResponse(responseCode = "406", description = "Not Acceptable", content = @Content),
         @ApiResponse(responseCode = "415", description = "Unsupported Media Type", content = @Content),
@@ -217,6 +219,11 @@ public class MessageController {
                         }))
             @RequestBody MessageCreateDto messageCreateDto, 
             @RequestAttribute User principal) {
+
+        Conversation conversation = conversationRepository.getConversationById(conversationId);
+        if (conversation == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation non trouvée");
+        }
         Message message = MessageBuilder.create()
             .setConversation(conversationRepository.getConversationById(conversationId))
             .setSenderId(principal.getId())
@@ -236,10 +243,14 @@ public class MessageController {
             * Pour marquer le message comme lu, le champ `read` est mis à true. Si le message a déjà été lu, l'opération n'a pas d'effet.
 
             * Pour marquer le message comme supprimé, le champ `deleted` est mis à `true`. Cette opération est irréversible et entraîne la suppression logique du message pour cette personne.
+
+            Il n'est pas permis de marquer un message à la fois comme lu et supprimé. Si les deux champs sont renseignés, une erreur 400 est renvoyée.
+
+            Il est en revanche obligatoire de renseigner au moins un des deux champs. Si aucun d'eux n'est renseigné, une erreur 400 est renvoyée.
             """
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Statut·modifié avec succès.", 
+        @ApiResponse(responseCode = "200", description = "Statut·du message modifié avec succès.", 
             content = @Content(
                 schema = @Schema(implementation = ParticipantResponseDto.class),
                 examples = 
@@ -269,8 +280,10 @@ public class MessageController {
                                 }
                             }
                             """))),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
         @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
         @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
+        @ApiResponse(responseCode = "404", description = "Conversation ou message non trouvé", content = @Content),
         @ApiResponse(responseCode = "406", description = "Not Acceptable", content = @Content),
         @ApiResponse(responseCode = "415", description = "Unsupported Media Type", content = @Content),
         @ApiResponse(responseCode = "429", description = "Too Many Requests", content = @Content),
@@ -284,7 +297,7 @@ public class MessageController {
             )
             @PathVariable long conversationId, 
             @Parameter(
-                description = "Identifiant de la conversation",
+                description = "Identifiant du message",
                 example = "100"
             )
             @PathVariable long messageId,
@@ -312,17 +325,17 @@ public class MessageController {
 
         Conversation conversation = conversationRepository.getConversationById(conversationId);
         if (conversation == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation non trouvée");
         }
         Message message = conversationRepository.getMessageById(messageId);
         if (message == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Message not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Message non trouvé");
         }
         if (messageUpdateDto.read() != null && messageUpdateDto.delete() != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only one of read or delete can be set");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Impossible de modifier le statut du message à la fois comme lu et supprimé");
         }
         if (messageUpdateDto.read() == null && messageUpdateDto.delete() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Either read or delete must be set");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Un des champs `read` ou `delete` doit être renseigné");  
         }
 
         if (messageUpdateDto.read() != null && messageUpdateDto.read()) {

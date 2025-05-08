@@ -6,12 +6,12 @@ import java.util.List;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedModel;
 
-public class ConversationsReponseDto extends PagedModel<ConversationResponseDto> {
-    public ConversationsReponseDto() {
+public class ConversationsResponseDto extends PagedModel<ConversationResponseDto> {
+    public ConversationsResponseDto() {
         super();
     }
 
-    public ConversationsReponseDto(Collection<ConversationResponseDto> content, PageMetadata metadata, Link... links) {
+    public ConversationsResponseDto(Collection<ConversationResponseDto> content, PageMetadata metadata, Link... links) {
         super(content, metadata, List.of(links));
     }
 }

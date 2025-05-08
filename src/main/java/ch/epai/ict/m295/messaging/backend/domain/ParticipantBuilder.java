@@ -2,6 +2,7 @@ package ch.epai.ict.m295.messaging.backend.domain;
 
 public class ParticipantBuilder {
     private long id;
+    private long conversationId;
     private String username;
     private Participant.Role role;
     private Participant.Status status;
@@ -10,8 +11,16 @@ public class ParticipantBuilder {
         return new ParticipantBuilder();
     }
 
+    private ParticipantBuilder() {
+    }
+
     public ParticipantBuilder setId(long id) {
         this.id = id;
+        return this;
+    }
+
+    public ParticipantBuilder setConversationId(long conversationId) {
+        this.conversationId = conversationId;
         return this;
     }
 
@@ -40,6 +49,6 @@ public class ParticipantBuilder {
         if (this.status == null) {
             this.status = Participant.Status.ACTIVE;
         }
-        return new Participant(this.id, this.username, this.role, this.status);
+        return new Participant(this.id, this.conversationId, this.username, this.role, this.status);
     }
 }

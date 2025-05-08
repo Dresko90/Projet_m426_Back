@@ -12,7 +12,7 @@
 
     <groupId>ch.epai.ict.m295.messaging</groupId>
     <artifactId>message-api</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0</version>
     <name>message-api</name>
     <description>EPAI-ICT Web development modules application.</description>
 
