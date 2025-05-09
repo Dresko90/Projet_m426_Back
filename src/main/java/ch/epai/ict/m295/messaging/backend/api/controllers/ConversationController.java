@@ -134,13 +134,11 @@ public class ConversationController {
             @Parameter(
                 description = "Numéro de la page à récupérer (la première page est 0).",
                 required = true)
-            @Min(0) @Max(100)
             @RequestParam(name = "page",defaultValue = "0") int pageNumber,
             @Parameter(
                 description = "Nombre d'éléments de la page à récupérer (≤ 100).",
                 required = true
             )
-            @Min(20) @Max(100)
             @RequestParam(name = "size", defaultValue = "20") int pageSize,
             @RequestAttribute User principal) {
         
