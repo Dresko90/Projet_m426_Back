@@ -1,0 +1,32 @@
+#version: '3.8'
+services:
+  messaging-api:
+    image: glcr.epai-ict.ch/m295/java/message-api-1
+    environment:
+      MESSAGE_API_DB_HOST: db
+      MESSAGE_API_DB_USERNAME: root
+      MESSAGE_API_DB_PASSWORD: epai123
+    restart: always
+    ports:
+      - 8080:8080
+    networks:
+      - messaging-net
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:11.7.2
+    environment:
+      MYSQL_ROOT_PASSWORD: epai123
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./data:/docker-entrypoint-initdb.d
+    networks:
+      - messaging-net
+
+volumes:
+  db_data:
+
+networks:
+  messaging-net:
+

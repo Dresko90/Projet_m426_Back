@@ -26,8 +26,8 @@ springdoc:
 
 app:
     db:
-        url: ${SPRING_DATASOURCE_URL:jdbc:mariadb://db:3306/messaging_db}
-        username: ${SPRING_DATASOURCE_USERNAME:root}
-        password: ${SPRING_DATASOURCE_PASSWORD:epai123}
+        url: ${MESSAGE_API_DB_URL:jdbc:mariadb://db:3306/messaging_db}
+        username: ${MESSAGE_API_DB_USERNAME:root}
+        password: ${MESSAGE_API_DB_PASSWORD:epai123}
     jwt:
         secretkey: Une clé secrète, très secrète, extrêmement secrète.
