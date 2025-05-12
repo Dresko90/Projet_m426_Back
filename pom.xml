@@ -68,7 +68,16 @@
             <artifactId>mariadb-java-client</artifactId>
             <version>3.4.1</version>
         </dependency>
-        
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>11.8.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+            <version>10.8.1</version>
+        </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
@@ -94,6 +103,34 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+
+
+<!-- Flyway plugin for database migration -->
+<!--
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>10.17.0</version>
+                <configuration>   
+                    <url>jdbc:mariadb://127.0.0.1:3306/</url>
+                    <user>root</user>
+                    <password>epai123</password>
+                    <locations>filesystem:data</locations>
+                    <cleanDisabled>false</cleanDisabled>
+                    <schemas>
+                        <schema>messaging_db</schema>
+                    </schemas>                
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.flywaydb</groupId>
+                        <artifactId>flyway-mysql</artifactId>
+                        <version>10.8.1</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+-->
+
         </plugins>
     </build>
 

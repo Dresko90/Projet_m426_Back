@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import ch.epai.ict.m295.messaging.backend.data.SqlConversationRepository;
@@ -25,14 +24,11 @@ import ch.epai.ict.m295.messaging.backend.domain.security.TokenRepository;
 @Configuration
 public class RepositoryConfig {
     
-    private final DataSource dataSource;
     private final SqlUserRepository sqlUserRepository;
     private final SqlTokenRepository sqlTokenRepository;
     private final SqlConversationRepository sqlConversationRepository;
     
-    public RepositoryConfig(String url, String username, String password) {
-        this.dataSource = new DriverManagerDataSource(url, username, password);
-        
+    public RepositoryConfig(DataSource dataSource) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         PlatformTransactionManager transactionManager = new DataSourceTransactionManager(dataSource);
 
@@ -44,7 +40,6 @@ public class RepositoryConfig {
         this.sqlUserRepository = new SqlUserRepository(jdbcTemplate);
         this.sqlTokenRepository = new SqlTokenRepository(jdbcTemplate);
         this.sqlConversationRepository = new SqlConversationRepository(jdbcTemplate, transactionManager);
-
     }
 
     @Bean("userRepository")

@@ -3,6 +3,16 @@ spring:
     application:
         name: messaging
 
+    flyway:
+        enabled: true
+        #url: ${MESSAGE_API_DB_URL:jdbc:mariadb://db:3306}
+        #user: ${MESSAGE_API_DB_USERNAME:root}
+        #password: ${MESSAGE_API_DB_PASSWORD:epai123}
+        locations: classpath:/db/migration
+        cleanDisabled: false
+        #schemas:
+        #    - messaging_db 
+
 server:
     servlet:
         context-path: /api/v1

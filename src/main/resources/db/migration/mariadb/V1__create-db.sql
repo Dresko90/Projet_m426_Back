@@ -1,4 +1,4 @@
-CREATE DATABASE messaging_db DEFAULT CHARSET UTF8;
+-- CREATE DATABASE messaging_db DEFAULT CHARSET UTF8;
 
 USE messaging_db;
 
@@ -9,6 +9,8 @@ CREATE TABLE user (
     username        VARCHAR(50),
     user_password   VARCHAR(255),
     user_role       VARCHAR(50),
+    user_role2       VARCHAR(50),
+
     display_name    VARCHAR(50),
     
     PRIMARY KEY (user_id)
@@ -67,7 +69,7 @@ CREATE TABLE message_status (
 );
 
 CREATE TABLE token (
-    token       VARCHAR(1024) NOT NULL,
+    token       VARCHAR(512) NOT NULL,
     user_id     BIGINT NOT NULL,
 
     PRIMARY KEY (token),
@@ -76,7 +78,7 @@ CREATE TABLE token (
         ON DELETE CASCADE
 );
 
-DELIMITER //
+-- DELIMITER //
 CREATE PROCEDURE delete_user(IN in_user_id BIGINT)
 BEGIN 
     START TRANSACTION;
@@ -103,8 +105,8 @@ BEGIN
 
     COMMIT;
 END;
-//
-DELIMITER ;
+-- //
+-- DELIMITER ;
 
 
  -- Entity counters
@@ -117,7 +119,7 @@ CREATE TABLE entity_counter (
     PRIMARY KEY (entity_id)
 );
 
-DELIMITER //
+-- DELIMITER //
 CREATE PROCEDURE get_next_id(IN in_entity_name VARCHAR(50), OUT out_next_id BIGINT) 
 BEGIN 
     DECLARE current_id BIGINT;
@@ -136,8 +138,8 @@ BEGIN
 
     SET out_next_id = current_id;
 END;
-//
-DELIMITER ;
+-- //
+-- DELIMITER ;
 
 INSERT INTO entity_counter (entity_id, counter_value, entity_name) VALUES (1, 1000, "user");
 INSERT INTO entity_counter (entity_id, counter_value, entity_name) VALUES (2, 1000, "conversation");
