@@ -71,6 +71,7 @@ public class TokenController {
         description = "Supprime le token de l'utilisateur·rice connecté·e (déconnexion). Si le token est invalide ou expiré, la requête ne produit pas d'effet.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Token supprimé avec succès."),
+        @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
         @ApiResponse(responseCode = "406", description = "Not Acceptable", content = @Content),
         @ApiResponse(responseCode = "415", description = "Unsupported Media Type", content = @Content),
         @ApiResponse(responseCode = "429", description = "Too Many Requests", content = @Content),
