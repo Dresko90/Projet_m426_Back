@@ -78,7 +78,7 @@ public class TokenController {
     })
     @DeleteMapping(path = "/tokens/me")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void handleDeleteToken(@RequestAttribute TokenDto tokenDto) {
-        this.tokenRepository.deleteToken(Token.fromString(tokenDto.token()));
+    public void handleDeleteToken(@RequestAttribute String token) {
+        this.tokenRepository.deleteToken(Token.fromString(token));
     }
 }

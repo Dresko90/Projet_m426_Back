@@ -30,7 +30,6 @@ public class SecurityConfig {
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll() // lasser passer les exceptions (?)
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs.yaml", "/v3/api-docs/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/tokens").permitAll()
-                .requestMatchers(HttpMethod.DELETE, "/tokens/me").permitAll()
                 .requestMatchers(HttpMethod.POST, "/users").permitAll()
                 .requestMatchers(HttpMethod.GET, "/users").hasRole("ADMIN")
                 .anyRequest().authenticated())
