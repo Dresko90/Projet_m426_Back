@@ -356,6 +356,10 @@ public class UserController {
             throw new ResponseStatusException(HttpStatusCode.valueOf(403));
         }
 
+        if (principal.getId() == userId && principal.getRole() == UserRoles.ADMIN) {
+            throw new ResponseStatusException(HttpStatusCode.valueOf(403));
+        }
+
         User user = this.userRepository.getUserById(userId);
         if (user == null) {
             throw new ResponseStatusException(HttpStatusCode.valueOf(404));
@@ -474,7 +478,25 @@ public class UserController {
 
         return modifyUser(principal.getId(), updateUserDto, principal);
     }
-            
+
+    @Operation(
+        operationId = "delete-my-data",
+        summary = "Supprime l'utilisateur·rice authentifié·e.",
+        description = "Supprime l'utilisateur·rice authentifié·e. Cette opération est irréversible et entraîne l’anonymisation de tous les messages envoyés." )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Utilisateur·rice supprimé avec succès."),
+        @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+        @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
+        @ApiResponse(responseCode = "404", description = "Utilisateur·rice non trouvé·e", content = @Content),
+        @ApiResponse(responseCode = "429", description = "Too Many Requests", content = @Content),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content)
+    })
+    @SecurityRequirement(name = "BearerAuth")
+    @DeleteMapping(path = "/users/me")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteMyData(@RequestAttribute User principal) {
+        this.deleteUser(principal.getId(), principal);
+    }
 
     private UsersResponseDto toUsersResponse(List<User> userList, int pageNumber, int pageSize, long totalElements, User principal) {
         return new UsersResponseDto(
