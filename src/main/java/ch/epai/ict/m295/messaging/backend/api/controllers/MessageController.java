@@ -153,6 +153,10 @@ public class MessageController {
         if (conversation == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation non trouvée");
         }
+        if (!conversation.isParticipant(principal.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "L'utilisateur n'est pas membre de la conversation");
+        }
+
         List<Message> messages = conversationRepository.getMessages(conversationId, principal.getId(), pageNumber, pageSize);
         long totalElements = conversationRepository.getNumberOfMessagesForConversation(conversationId);
         return new MessagesResponseDto(

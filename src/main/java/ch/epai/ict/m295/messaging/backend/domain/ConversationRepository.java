@@ -21,5 +21,6 @@ public interface ConversationRepository {
     Message getMessageById(long messageId);
     void createMessage(Message message);
     void markMessageAsReadForUser(long messageId, long userId);
-    void markMessageAsDeletedForUser(long messageId, long userId); 
+    void markMessageAsDeletedForUser(long messageId, long userId);
+    void anonymizeAllUserMessages(long userId);
 }

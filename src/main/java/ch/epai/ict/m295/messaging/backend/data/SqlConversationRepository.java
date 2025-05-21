@@ -170,6 +170,57 @@ public class SqlConversationRepository implements ConversationRepository {
         }
     }
 
+
+    private class AnonymizeAllUserMessagesTransaction implements TransactionCallback<Object> {
+        private final long userId;
+
+        public AnonymizeAllUserMessagesTransaction(long userId) {
+            this.userId = userId;
+        }
+
+        @Override
+        public Object doInTransaction(@NonNull TransactionStatus status) {
+            try {
+                jdbcTemplate.update(
+                    """
+                    UPDATE message
+                    SET body = "ANONYMIZED", sender_id = 0
+                    WHERE sender_id = :userId
+                    """,
+                    new MapSqlParameterSource("userId", this.userId)
+                );
+                jdbcTemplate.update(
+                    """
+                    UPDATE message_status
+                    SET user_id = 0
+                    WHERE user_id = :userId
+                    """,
+                    new MapSqlParameterSource("userId", this.userId)
+                );
+                jdbcTemplate.update(
+                    """
+                    DELETE FROM participant
+                    WHERE user_id = :userId
+                    """,
+                    new MapSqlParameterSource("userId", this.userId)
+                );
+                jdbcTemplate.update(
+                    """
+                    DELETE FROM conversation
+                    WHERE conversation_id NOT IN (
+                        SELECT DISTINCT conversation_id FROM participant
+                    );
+                    """,
+                    new MapSqlParameterSource("userId", this.userId)
+                );
+            } catch (Exception e) {
+                status.setRollbackOnly();
+                throw e;
+            }
+            return null;
+        }
+    }
+    
     private class AddParticipantsTransaction implements TransactionCallback<Object> {
         private final long conversationId;
         private final List<Participant> participants;
@@ -451,6 +502,13 @@ public class SqlConversationRepository implements ConversationRepository {
                 .addValue("messageId", messageId)
                 .addValue("userId", userId)
         );
+    }
+
+    @Override
+    public void anonymizeAllUserMessages(long userId) {
+        TransactionTemplate transactionTemplate = new TransactionTemplate(this.transactionManager);
+        AnonymizeAllUserMessagesTransaction transaction = new AnonymizeAllUserMessagesTransaction(userId);
+        transactionTemplate.execute(transaction);
     }
 
     private List<Participant> getParticipants(long conversationId) {

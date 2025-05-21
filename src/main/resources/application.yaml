@@ -1,17 +1,12 @@
 
 spring:
     application:
-        name: messaging
-
+        name: message-api
     flyway:
         enabled: true
-        #url: ${MESSAGE_API_DB_URL:jdbc:mariadb://db:3306}
-        #user: ${MESSAGE_API_DB_USERNAME:root}
-        #password: ${MESSAGE_API_DB_PASSWORD:epai123}
         locations: classpath:/db/migration
         cleanDisabled: false
-        #schemas:
-        #    - messaging_db 
+
 
 server:
     servlet:
@@ -41,3 +36,5 @@ app:
         password: ${MESSAGE_API_DB_PASSWORD:epai123}
     jwt:
         secretkey: Une clé secrète, très secrète, extrêmement secrète.
+
+

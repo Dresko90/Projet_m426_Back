@@ -1,11 +1,13 @@
 #version: '3.8'
 services:
   messaging-api:
-    image: glcr.epai-ict.ch/m295/java/message-api-1
+    image: glcr.epai-ict.ch/m295/java/message-api-1:latest
+    platform: linux/amd64
     environment:
       MESSAGE_API_DB_HOST: db
       MESSAGE_API_DB_USERNAME: root
       MESSAGE_API_DB_PASSWORD: epai123
+      MESSAGE_API_DEMO: true
     restart: always
     ports:
       - 8080:8080

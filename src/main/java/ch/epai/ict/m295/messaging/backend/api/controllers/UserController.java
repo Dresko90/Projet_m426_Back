@@ -22,10 +22,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import ch.epai.ict.m295.messaging.backend.api.dto.UserResponseDto;
 import ch.epai.ict.m295.messaging.backend.api.dto.UserCreateDto;
+import ch.epai.ict.m295.messaging.backend.api.dto.UserResponseDto;
 import ch.epai.ict.m295.messaging.backend.api.dto.UserUpdateDto;
 import ch.epai.ict.m295.messaging.backend.api.dto.UsersResponseDto;
+import ch.epai.ict.m295.messaging.backend.domain.ConversationRepository;
 import ch.epai.ict.m295.messaging.backend.domain.User;
 import ch.epai.ict.m295.messaging.backend.domain.UserBuilder;
 import ch.epai.ict.m295.messaging.backend.domain.UserRepository;
@@ -47,13 +48,15 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
+    private final ConversationRepository conversationRepository;
 
-    public UserController(UserRepository userRepository, TokenRepository tokenRepository) {
+
+    public UserController(UserRepository userRepository, TokenRepository tokenRepository, ConversationRepository conversationRepository) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
+        this.conversationRepository = conversationRepository;
     }
     
-
     @Operation(
         operationId = "get-users",
         summary = "Récupère la liste des utilisateur·rice·s",
@@ -154,6 +157,7 @@ public class UserController {
         @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
         @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
         @ApiResponse(responseCode = "406", description = "Not Acceptable", content = @Content),
+        @ApiResponse(responseCode = "409", description = "Conflict", content = @Content),
         @ApiResponse(responseCode = "415", description = "Unsupported Media Type", content = @Content),
         @ApiResponse(responseCode = "429", description = "Too Many Requests", content = @Content),
         @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content),    })
@@ -175,6 +179,10 @@ public class UserController {
                         """)))
             @RequestBody UserCreateDto createUserDto) {
 
+        if (this.userRepository.getUserByUsername(createUserDto.username()) != null) {
+            throw new ResponseStatusException(HttpStatusCode.valueOf(409));
+        }
+
         User user = UserBuilder.create()
             .setUsername(createUserDto.username())
             .setDisplayName(createUserDto.displayName())
@@ -182,7 +190,6 @@ public class UserController {
         this.userRepository.createUser(user, createUserDto.password());
         return toUserResponse(user);
     }
-
 
     @Operation(
         operationId = "get-user",
@@ -354,9 +361,120 @@ public class UserController {
             throw new ResponseStatusException(HttpStatusCode.valueOf(404));
         }
 
+        this.conversationRepository.anonymizeAllUserMessages(userId);
         this.tokenRepository.deleteAllUserToken(user);
         this.userRepository.deleteUser(user);
     }
+
+    @Operation(
+        operationId = "get-my-data",
+        summary = "Récupère les informations de l'utilisateur·rice authentifié·e.",
+        description = "Récupère les informations de l'utilisateur·rice authentifié·e à partir de son jeton d'authentification."
+    )
+    @SecurityRequirement(name = "BearerAuth")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Liste récupérée avec succès",
+            content = @Content(
+                schema = @Schema(implementation = UsersResponseDto.class),
+                examples = @ExampleObject(
+                    value ="""
+                        {
+                            "id": 11,
+                            "username": "sheana@example.com",
+                            "displayName": "sheana",
+                            "_links": {
+                                "self": {
+                                    "href": "/api/v1/users/me"
+                                }
+                            }
+                        }
+                        """)
+                )),           
+        @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+        @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
+        @ApiResponse(responseCode = "406", description = "Not Acceptable", content = @Content),
+        @ApiResponse(responseCode = "415", description = "Unsupported Media Type", content = @Content),
+        @ApiResponse(responseCode = "429", description = "Too Many Requests", content = @Content),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content),
+    })
+    @GetMapping(path = "/users/me", produces = "application/hal+json")
+    public UserResponseDto getMyData(
+            @RequestAttribute User principal) {
+
+        return new UserResponseDto(
+                        principal.getId(),
+                        principal.getUsername(),
+                        principal.getDisplayName())
+                    .add(linkTo(methodOn(UserController.class).getMyData(null)).withSelfRel());
+    }
+
+    @Operation(
+        operationId = "update-my-data",
+        summary = "Modifie les informations de utilisateur·rice authentifié·e.",
+        description = "Modifie les informations de l'utilisateur·rice authentifié·e à partir de son jeton d'authentification.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Données modifiées avec succès.",
+            content = @Content(
+                schema = @Schema(implementation = UserResponseDto.class),
+                examples = 
+                    @ExampleObject(
+                        value = """
+                            {
+                                "id": 11,
+                                "username": "sheana@example.com",
+                                "displayName": "sheana",
+                                "_links": {
+                                    "self": {
+                                        "href": "/api/v1/users/11"
+                                    }
+                                }
+                            }
+                            """))),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
+        @ApiResponse(responseCode = "404", description = "Utilisateur·rice non trouvé·e", content = @Content),
+        @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+        @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
+        @ApiResponse(responseCode = "406", description = "Not Acceptable", content = @Content),
+        @ApiResponse(responseCode = "415", description = "Unsupported Media Type", content = @Content),
+        @ApiResponse(responseCode = "429", description = "Too Many Requests", content = @Content),
+        @ApiResponse(responseCode = "500", description = "Internal Server Error", content = @Content),    })
+    @SecurityRequirement(name = "BearerAuth")
+    @PatchMapping(path = "/users/me", consumes = "application/json", produces = "application/hal+json")
+    public UserResponseDto modifyMyData(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "Données de l'utilisateur·rice à modifier",
+                required = true,
+                content = @Content(
+                    mediaType = "application/json",
+                    examples = {
+                        @ExampleObject(
+                            name = "Modifier le mot de passe",
+                            value = """
+                            {
+                                "password": "Epai123"
+                            }
+                            """),
+                         @ExampleObject(
+                            name = "Modifier le nom d'utilisateur·rice",
+                            value = """
+                            {
+                                "username": "+41799999123"
+                            }
+                            """),
+                        @ExampleObject(
+                            name = "Modifier le nom affichable",
+                            value = """
+                            {
+                                "displayName": "Sheana"
+                            }
+                            """)
+                        }))
+            @RequestBody UserUpdateDto updateUserDto, 
+            @RequestAttribute User principal) {
+
+        return modifyUser(principal.getId(), updateUserDto, principal);
+    }
+            
 
     private UsersResponseDto toUsersResponse(List<User> userList, int pageNumber, int pageSize, long totalElements, User principal) {
         return new UsersResponseDto(
