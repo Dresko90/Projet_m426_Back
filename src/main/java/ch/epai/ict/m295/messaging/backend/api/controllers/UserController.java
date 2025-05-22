@@ -60,7 +60,7 @@ public class UserController {
     @Operation(
         operationId = "get-users",
         summary = "Récupère la liste des utilisateur·rice·s",
-        description = "Récupère la liste des utilisateur·rice·s avec pagination."
+        description = "Récupère la liste des utilisateur·rice·s avec pagination. Cette fonctionnalité est réservée aux administrateur·rice·s."
     )
     @SecurityRequirement(name = "BearerAuth")
     @ApiResponses(value = {
@@ -179,12 +179,13 @@ public class UserController {
                         """)))
             @RequestBody UserCreateDto createUserDto) {
 
-        if (this.userRepository.getUserByUsername(createUserDto.username()) != null) {
+        String nomralizedUsername = createUserDto.username().toLowerCase();
+        if (this.userRepository.getUserByUsername(nomralizedUsername) != null) {
             throw new ResponseStatusException(HttpStatusCode.valueOf(409));
         }
 
         User user = UserBuilder.create()
-            .setUsername(createUserDto.username())
+            .setUsername(nomralizedUsername)
             .setDisplayName(createUserDto.displayName())
             .build();
         this.userRepository.createUser(user, createUserDto.password());
@@ -304,7 +305,7 @@ public class UserController {
                         }))
             @RequestBody UserUpdateDto updateUserDto, 
             @RequestAttribute User principal) {
-        
+
         if (principal.getId() != userId && principal.getRole() != UserRoles.ADMIN) {
             throw new ResponseStatusException(HttpStatusCode.valueOf(403));
         }
@@ -314,12 +315,20 @@ public class UserController {
             throw new ResponseStatusException(HttpStatusCode.valueOf(404));
         }
 
+        String normalizedUsername = null;
+        if (updateUserDto.username() != null) {
+            normalizedUsername = updateUserDto.username().toLowerCase();
+            if (!normalizedUsername.equals(user.getUsername()) && this.userRepository.getUserByUsername(normalizedUsername) != null) {
+                throw new ResponseStatusException(HttpStatusCode.valueOf(409));
+            }
+        }
+
         this.userRepository.updateUser(
             UserBuilder.create()
                 .setId(userId)
                 .setUsername(
                     Objects.requireNonNullElse(
-                        updateUserDto.username(), 
+                        normalizedUsername, 
                         user.getUsername()))
                 .setDisplayName(
                     Objects.requireNonNullElse(

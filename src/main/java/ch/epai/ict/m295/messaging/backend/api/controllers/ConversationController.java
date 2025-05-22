@@ -156,9 +156,11 @@ public class ConversationController {
         operationId = "create-conversation", 
         summary = "Crée une nouvelle conversation.", 
         description = """
-            Crée une nouvelle conversation pour l'utilisateur·rice connecté·e et une ou plusieurs autre personne.
+            Crée une nouvelle conversation pour l'utilisateur·rice connecté·e et une ou plusieurs autre personne. L'utilisateur·rice connecté·e est automatiquement ajouté·e à la conversation.
 
-            Un·e participant·e peut être spécifié·e par son adresse e-mail, son numéro de téléphone au format E.164, ou l'identifiant de son compte (userId). 
+            On suppose que l'utilisateur·rice connecté·e connait l'adresse e-mail ou le numéro de téléphone au format E.164 des autres participant·e·s. Il n'y a pas de moyen de recherche d'autres utilisateur·rice·s.
+
+            Un·e participant·e peut être spécifié·e par son adresse e-mail, son numéro de téléphone au format E.164. 
             
             * Dans le cas d'une conversation privée, s’il existe déjà une conversation entre les deux interlocuteur·rice·s, elle est retournée. 
             
@@ -298,7 +300,7 @@ public class ConversationController {
                                     "username": "siona@example.com"
                                 },
                                 {
-                                    "userId": 15
+                                    "username": "fallom@example.com"
                                 }
                             ]
                         }
