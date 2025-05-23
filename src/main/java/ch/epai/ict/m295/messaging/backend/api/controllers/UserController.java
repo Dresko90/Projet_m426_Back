@@ -96,7 +96,13 @@ public class UserController {
                             },
                             "_links": {
                                 "self": {
-                                    "href": "/api/v1/users?page=0&size=100"
+                                    "href": "/api/v1/users?page=0&size=20"
+                                },
+                                "first": {
+                                    "href": "/api/v1/users?page=0&size=20"
+                                },
+                                "last": {
+                                    "href": "/api/v1/users?page=0&size=20"
                                 }
                             },
                             "page": {
@@ -398,6 +404,9 @@ public class UserController {
                             "_links": {
                                 "self": {
                                     "href": "/api/v1/users/me"
+                                },
+                                "conversations": {
+                                    "href": "/api/v1/conversations?page=0&size=20"
                                 }
                             }
                         }
@@ -418,7 +427,8 @@ public class UserController {
                         principal.getId(),
                         principal.getUsername(),
                         principal.getDisplayName())
-                    .add(linkTo(methodOn(UserController.class).getMyData(null)).withSelfRel());
+                    .add(linkTo(methodOn(UserController.class).getMyData(null)).withSelfRel())
+                    .add(linkTo(methodOn(ConversationController.class).getConversations(0, 20, null)).withRel("conversations"));
     }
 
     @Operation(
@@ -508,12 +518,25 @@ public class UserController {
     }
 
     private UsersResponseDto toUsersResponse(List<User> userList, int pageNumber, int pageSize, long totalElements, User principal) {
-        return new UsersResponseDto(
+        UsersResponseDto response =  new UsersResponseDto(
             userList.stream()
                 .map(user -> toUserResponse(user))
                 .collect(Collectors.toList()),
             new PageMetadata(pageSize, pageNumber, totalElements),
             linkTo(methodOn(UserController.class).getUsers(pageNumber, pageSize, principal)).withSelfRel());
+
+        if (pageNumber > 0) {
+            response.add(linkTo(methodOn(UserController.class).getUsers(pageNumber - 1, pageSize, principal)).withRel("previous"));
+        }
+        if (pageNumber < (totalElements / pageSize)) {
+            response.add(linkTo(methodOn(UserController.class).getUsers(pageNumber + 1, pageSize, principal)).withRel("next"));
+        }
+        if (totalElements > 0) {
+            response.add(linkTo(methodOn(UserController.class).getUsers(0, pageSize, principal)).withRel("first"));
+            response.add(linkTo(methodOn(UserController.class).getUsers((int) (totalElements / pageSize), pageSize, principal)).withRel("last"));
+        }
+
+        return response;
     }
 
     private UserResponseDto toUserResponse(User user) {

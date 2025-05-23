@@ -6,6 +6,8 @@ import java.util.List;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.PagedModel;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class ConversationsResponseDto extends PagedModel<ConversationResponseDto> {
     public ConversationsResponseDto() {
         super();
@@ -13,5 +15,11 @@ public class ConversationsResponseDto extends PagedModel<ConversationResponseDto
 
     public ConversationsResponseDto(Collection<ConversationResponseDto> content, PageMetadata metadata, Link... links) {
         super(content, metadata, List.of(links));
+    }
+
+    @JsonIgnore
+    public ConversationsResponseDto addLink(Link link) {
+        super.add(link);
+        return this;
     }
 }

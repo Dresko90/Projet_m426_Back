@@ -103,6 +103,9 @@ public class ConversationController {
                                                 },
                                                 "participants": {
                                                     "href": "/api/v1/conversations/100/participants"
+                                                },
+                                                "messages": {
+                                                    "href": "/api/v1/conversations/100/messages"
                                                 }
                                             }
                                         }
@@ -110,6 +113,12 @@ public class ConversationController {
                                 },
                                 "_links": {
                                     "self": {
+                                        "href": "/api/v1/conversations?page=0&size=20"
+                                    },
+                                    "first": {
+                                        "href": "/api/v1/conversations?page=0&size=20"
+                                    },
+                                    "last": {
                                         "href": "/api/v1/conversations?page=0&size=20"
                                     }
                                 },
@@ -140,15 +149,29 @@ public class ConversationController {
             @RequestParam(name = "size", defaultValue = "20") int pageSize,
             @RequestAttribute User principal) {
         
-        return new ConversationsResponseDto(
+        long totalElements = conversationRepository.getNumberOfConvesationForUser(principal);
+        ConversationsResponseDto response = new ConversationsResponseDto(
             conversationRepository.getConversationsByUser(principal, pageNumber, pageSize ).stream()
                 .map(conversation -> toConversationResponse(conversation))
                 .collect(Collectors.toList()),
             new PageMetadata(
                     pageSize, 
                     pageNumber, 
-                    conversationRepository.getNumberOfConvesationForUser(principal)),
+                    totalElements),
             linkTo(methodOn(ConversationController.class).getConversations(pageNumber, pageSize, principal)).withSelfRel());
+    
+        if (pageNumber > 0) {
+            response.add(linkTo(methodOn(ConversationController.class).getConversations(pageNumber - 1, pageSize, principal)).withRel("previous"));
+        }
+        if (pageNumber < (totalElements / pageSize)) {
+            response.add(linkTo(methodOn(ConversationController.class).getConversations(pageNumber + 1, pageSize, principal)).withRel("next"));
+        }
+        if (totalElements > 0) {
+            response.add(linkTo(methodOn(ConversationController.class).getConversations(0, pageSize, principal)).withRel("first"));
+            response.add(linkTo(methodOn(ConversationController.class).getConversations((int) (totalElements / pageSize), pageSize, principal)).withRel("last"));
+        }
+
+        return response;
     }
 
 
@@ -209,6 +232,9 @@ public class ConversationController {
                                     },
                                     "participants": {
                                         "href": "/api/v1/conversations/1003/participants"
+                                    },
+                                    "messages": {
+                                        "href": "/api/v1/conversations/1003/messages"
                                     }
                                 }
                             }
@@ -262,6 +288,9 @@ public class ConversationController {
                                     },
                                     "participants": {
                                         "href": "/api/v1/conversations/1003/participants"
+                                    },
+                                    "messages": {
+                                        "href": "/api/v1/conversations/1003/messages"
                                     }
                                 }
                             }
@@ -419,7 +448,8 @@ public class ConversationController {
                         .map(participant -> toParticipantResponse(conversation, participant))
                         .collect(Collectors.toList()),
                 linkTo(methodOn(ConversationController.class).getConversation(conversation.getId(), null)).withSelfRel(),
-                linkTo(methodOn(ParticipantController.class).addParticipants(conversation.getId(), null, null)).withRel("participants"));
+                linkTo(methodOn(ParticipantController.class).addParticipants(conversation.getId(), null, null)).withRel("participants"),
+                linkTo(methodOn(MessageController.class).createMessages(conversation.getId(), null, null)).withRel("messages"));
 }
 
     private ParticipantResponseDto toParticipantResponse(Conversation conversation, Participant participant) {

@@ -122,6 +122,12 @@ public class MessageController {
                                 "_links": {
                                     "self": {
                                         "href": "/api/v1/conversation/100/messages?page=0&size=20"
+                                    },
+                                    "first": {
+                                        "href": "/api/v1/conversation/100/messages?page=0&size=20"
+                                    },
+                                    "last": {
+                                        "href": "/api/v1/conversation/100/messages?page=0&size=20"
                                     }
                                 },
                                 "page": {
@@ -159,12 +165,25 @@ public class MessageController {
 
         List<Message> messages = conversationRepository.getMessages(conversationId, principal.getId(), pageNumber, pageSize);
         long totalElements = conversationRepository.getNumberOfMessagesForConversation(conversationId);
-        return new MessagesResponseDto(
+        MessagesResponseDto response = new MessagesResponseDto(
                 messages.stream()
                     .map(message -> toMessageResponse(message))
                     .collect(Collectors.toList()),
                 new PageMetadata(pageSize, pageNumber, totalElements),
                 linkTo(methodOn(MessageController.class).getMessages(conversationId, pageNumber, pageSize, principal)).withSelfRel());
+
+        if (pageNumber > 0) {
+            response.add(linkTo(methodOn(MessageController.class).getMessages(conversationId, pageNumber - 1, pageSize, principal)).withRel("previous"));
+        }
+        if (pageNumber < (totalElements / pageSize)) {
+            response.add(linkTo(methodOn(MessageController.class).getMessages(conversationId, pageNumber + 1, pageSize, principal)).withRel("next"));
+        }
+        if (totalElements > 0) {
+            response.add(linkTo(methodOn(MessageController.class).getMessages(conversationId, 0, pageSize, principal)).withRel("first"));
+            response.add(linkTo(methodOn(MessageController.class).getMessages(conversationId, (int) (totalElements / pageSize), pageSize, principal)).withRel("last"));
+        }
+    
+        return response;
     }
 
 
