@@ -432,7 +432,7 @@ public class SqlConversationRepository implements ConversationRepository {
             WHERE conversation_id = :conversationId 
                 AND user_id = :userId 
                 AND deleted = FALSE
-            ORDER BY send_at ASC
+            ORDER BY send_at DESC
             LIMIT :limit OFFSET :offset;
             """,
             new MapSqlParameterSource()
