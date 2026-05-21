@@ -1,7 +1,6 @@
 package ch.epai.ict.m295.messaging.backend.api.controllers;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
@@ -52,7 +51,15 @@ public class TokenController {
     })
     @PostMapping(path = "/tokens", produces = "application/json")
     @ResponseStatus(HttpStatus.CREATED)
-    public TokenDto handlePostToken(@RequestBody CredentialDto credentials, @RequestAttribute(required = false) String token) {
+    public TokenDto handlePostToken(@RequestBody(required = false) CredentialDto credentials, @RequestAttribute(required = false) String token) {
+        if (credentials == null
+                || credentials.username() == null
+                || credentials.username().isBlank()
+                || credentials.password() == null
+                || credentials.password().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
         if (token != null) {
             this.tokenRepository.deleteToken(Token.fromString(token));
         }
@@ -62,7 +69,7 @@ public class TokenController {
             this.tokenRepository.addToken(newToken, user);
             return new TokenDto(newToken.toString());
         }
-        throw new ResponseStatusException(HttpStatusCode.valueOf(401));
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
     @Operation(
