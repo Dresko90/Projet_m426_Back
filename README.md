@@ -56,5 +56,9 @@ Routes disponibles :
 
     Authentification / tokens :
 
-    POST    http://localhost:8080/tokens
-    DELETE  http://localhost:8080/tokens/me
+    POST    http://localhost:8080/api/v1/tokens
+    DELETE  http://localhost:8080/api/v1/tokens/me
+
+Endpoint de connexion :
+
+    POST http://localhost:8080/api/v1/tokens

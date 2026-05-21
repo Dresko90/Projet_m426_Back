@@ -24,7 +24,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @RestController
-@Tag(name ="token")
+@Tag(name = "token")
 public class TokenController {
 
     private TokenRepository tokenRepository;
@@ -38,7 +38,7 @@ public class TokenController {
     @Operation(
         operationId = "login",
         summary = "Crée un token d'authentification (connexion)",
-        description = "Renvoie un token d'authentification si le nom d'utilsateur et le mot de passe sont valides.")
+        description = "Endpoint de connexion. Reçoit un nom d'utilisateur et un mot de passe, puis renvoie un token d'authentification si les identifiants sont valides.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Jeton créé avec succès",
             content = @Content(schema = @Schema(implementation = TokenDto.class))),
@@ -66,7 +66,7 @@ public class TokenController {
     }
 
     @Operation(
-        operationId = "login",
+        operationId = "logout",
         summary = "Supprime le token de l'utilisateur·rice connecté·e (déconnexion).",
         description = "Supprime le token de l'utilisateur·rice connecté·e (déconnexion). Si le token est invalide ou expiré, la requête ne produit pas d'effet.")
     @ApiResponses(value = {
