@@ -1,5 +1,8 @@
 # Projet_m426_Back
 
+Se connecter au réseau I-FR
+Lancer Docker Desktop
+
 Se placer dans le dossier /docker du projet :
 Projet_m426_back/message-api-1/docker$
 
