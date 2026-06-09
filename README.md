@@ -1,5 +1,8 @@
 # Projet_m426_Back
 
+Se connecter au réseau I-FR
+Lancer Docker Desktop
+
 Se placer dans le dossier /docker du projet :
 Projet_m426_back/message-api-1/docker$
 
@@ -53,5 +56,31 @@ Routes disponibles :
 
     Authentification / tokens :
 
-    POST    http://localhost:8080/tokens
-    DELETE  http://localhost:8080/tokens/me
+    POST    http://localhost:8080/api/v1/tokens
+    DELETE  http://localhost:8080/api/v1/tokens/me
+
+Endpoint de connexion :
+
+    POST http://localhost:8080/api/v1/tokens
+
+Body :
+
+    {
+      "username": "admin@example.com",
+      "password": "Epai123"
+    }
+
+Réponse 201 :
+
+    {
+      "token": "..."
+    }
+
+Réponses d'erreur :
+
+    400 Bad Request : username ou password manquant/vide
+    401 Unauthorized : identifiants invalides
+
+Le token retourné doit ensuite être envoyé dans les requêtes protégées :
+
+    Authorization: Bearer <token>
