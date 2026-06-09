@@ -29,6 +29,7 @@ public class SqlIdGenerator implements IdGenerator {
             .addValue("out_next_id", null);
 
         Map<String, Object> res = this.simpleJdbcCall.execute(parameters);
-        return (long) res.get("out_next_id");
+        return (long) res.get("out_next_id"); 
+    
     }
 }

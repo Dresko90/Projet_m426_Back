@@ -9,6 +9,7 @@ INSERT INTO user (user_id, username, display_name, user_password, user_role) VAL
 INSERT INTO user (user_id, username, display_name, user_password, user_role) VALUES (14, "trevize@example.com", "trevize", "$2a$10$xqaCFCdUiMEJq85ar7XjhuTiHvD6hzml5Pu4ZbMMYhG.ePUV0uyFC", "USER");
 INSERT INTO user (user_id, username, display_name, user_password, user_role) VALUES (15, "fallom@example.com", "fallom", "$2a$10$xqaCFCdUiMEJq85ar7XjhuTiHvD6hzml5Pu4ZbMMYhG.ePUV0uyFC", "USER");
 INSERT INTO user (user_id, username, display_name, user_password, user_role) VALUES (16, "daneel@example.com", "daneel", "$2a$10$xqaCFCdUiMEJq85ar7XjhuTiHvD6hzml5Pu4ZbMMYhG.ePUV0uyFC", "USER");
+INSERT INTO user (user_id, username, display_name, user_password, user_role) VALUES (17, "test@example.com", "Test User", "$2a$10$xqaCFCdUiMEJq85ar7XjhuTiHvD6hzml5Pu4ZbMMYhG.ePUV0uyFC", "USER");
 USE messaging_db;
 
 -- Tokens (sheana@example.com)
